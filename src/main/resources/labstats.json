@@ -1,0 +1,178 @@
+{
+  "Abercrombie Learning Hub": {
+    "East": {
+      "pc": [
+        1265
+      ],
+      "pods": [
+        1264
+      ]
+    },
+    "North": {
+      "pc": [
+        1262
+      ],
+      "pods": [
+        1263
+      ]
+    },
+    "South": {
+      "pc": [
+        1260
+      ],
+      "pods": [
+        1261
+      ]
+    }
+  },
+  "Fisher Library": {
+    "Level 2": {
+      "pc": [
+        1215,
+        1216
+      ],
+      "pods": [
+        1220
+      ]
+    },
+    "Level 3": {
+      "pc": [
+        1217,
+        1221
+      ]
+    },
+    "Level 4": {
+      "pc": [
+        1218,
+        1219
+      ]
+    }
+  },
+  "Brennan MacCallum": {
+    "Learning Hub": {
+      "pc": [
+        1240
+      ],
+      "pods": [
+        1241
+      ]
+    }
+  },
+  "Education Access Lab": {
+    "": {
+      "pc": [
+        1248
+      ]
+    }
+  },
+  "Law Library": {
+    "": {
+      "pc": [
+        1223,
+        1224,
+        1225,
+        1226,
+        1227,
+        1228
+      ]
+    }
+  },
+  "Sydney Dental Hospital Library": {
+    "": {
+      "pc": [
+        1205
+      ]
+    }
+  },
+  "Camden Library": {
+    "": {
+      "pc": [
+        1207
+      ],
+      "pods": [
+        1206
+      ]
+    }
+  },
+  "The Quarter": {
+    "": {
+      "pc": [
+        1203
+      ],
+      "pods": [
+        1204
+      ]
+    }
+  },
+  "Conservatorium of Music Library": {
+    "": {
+      "pc": [
+        1210
+      ]
+    }
+  },
+  "Cumberland": {
+    "Library": {
+      "pc": [
+        1211,
+        1212
+      ]
+    },
+    "Learning Hub": {
+      "pc": [
+        1253
+      ]
+    }
+  },
+  "SciTech Library": {
+    "": {
+      "pc": [
+        1229,
+        1230,
+        1231,
+        1232,
+        1233,
+        1234,
+        1235
+      ]
+    }
+  },
+  "Bosch Commons": {
+    "": {
+      "pc": [
+        1213,
+        1214
+      ]
+    }
+  },
+  "Sydney College of the Arts Library": {
+    "": {
+      "pc": [
+        1236,
+        1237
+      ]
+    }
+  },
+  "PNR Learning Hub": {
+    "": {
+      "pc": [
+        1267
+      ],
+      "pods": [
+        1268
+      ]
+    }
+  },
+  "Nursing": {
+    "Access Lab": {
+      "pc": [
+        1269
+      ]
+    },
+    "Library": {
+      "pc": [
+        1200
+      ]
+    }
+  }
+}

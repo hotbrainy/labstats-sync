@@ -10,6 +10,8 @@ import com.amazonaws.services.s3.model.StorageClass;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import edu.sydneyuni.myuni.models.LabStatsConfig;
+import edu.sydneyuni.myuni.models.LabStatsGroupStatusResponse;
 import edu.sydneyuni.myuni.models.RoomStation;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -24,10 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class LabStatsSync implements RequestStreamHandler {
 
@@ -35,42 +34,51 @@ public class LabStatsSync implements RequestStreamHandler {
     private final ObjectWriter writer;
     private final AmazonS3 s3;
     private final String bucketName;
-    private final String customerId;
+    private final String labStatsApiKey;
     private CloseableHttpClient client;
-    private final List<String> publicDataSets;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd/hh-mm");
     private static final Logger logger = LogManager.getLogger(LabStatsSync.class);
+    private final LabStatsConfig config;
 
     @SuppressWarnings("unused")
     public LabStatsSync() {
-        this(AmazonS3ClientBuilder.defaultClient(), System.getenv("S3_BUCKET"), System.getenv("CUSTOMER_ID"));
+        this(AmazonS3ClientBuilder.defaultClient(), System.getenv("S3_BUCKET"), System.getenv("LABSTATS_API_KEY"));
         if (bucketName == null || bucketName.length() == 0) {
             throw new IllegalArgumentException("No AWS S3_BUCKET specified");
         }
         // https://support.labstats.com/article/public-api/
-        if (customerId == null || customerId.length() == 0) {
-            throw new IllegalArgumentException("No LabStats CUSTOMER_ID specified");
+        if (labStatsApiKey == null || labStatsApiKey.length() == 0) {
+            throw new IllegalArgumentException("No LabStats LABSTATS_API_KEY specified");
         }
     }
 
-    LabStatsSync(AmazonS3 s3, String bucketName, String customerId) {
-        reader = new ObjectMapper().readerFor(RoomStation.class);
+    /*
+    public static void main(String[] args) throws IOException {
+        LabStatsSync labStatsSync = new LabStatsSync(null, null, "");
+        RoomStation[] response = labStatsSync.getLabStatsRoomStations(labStatsSync.getConfig());
+    }*/
+
+    LabStatsSync(AmazonS3 s3, String bucketName, String labStatsApiKey) {
+        reader = new ObjectMapper().readerFor(LabStatsGroupStatusResponse.class);
         writer = new ObjectMapper().writerFor(RoomStation[].class);
         this.s3 = s3;
         this.bucketName = bucketName;
-        this.customerId = customerId;
+        this.labStatsApiKey = labStatsApiKey;
         client = HttpClientBuilder.create()
                 .setDefaultHeaders(Collections.singletonList(
-                        new BasicHeader("Authorization", customerId))).build();
-        publicDataSets = Arrays.asList("H70", "F03", "A18", "F07", "A35",
-                "F10", "C12", "C15", "A16", "C24", "C41", "C43", "G02",
-                "D05", "N01", "J02", "M02", "z_SIT_2019");
+                        new BasicHeader("Authorization", labStatsApiKey))).build();
+        try {
+            config = new ObjectMapper().readValue(getClass().getClassLoader().getResourceAsStream("labstats.json"), LabStatsConfig.class);
+        } catch (IOException e) {
+            logger.error("Error opening labstats.json", e);
+            throw new IllegalStateException("Error opening labstats.json", e);
+        }
     }
 
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
         try {
-            RoomStation[] roomStations = getRoomStationsLabStats(getPublicDataSets());
+            RoomStation[] roomStations = getLabStatsRoomStations(getConfig());
             syncRoomStationsS3(getBucketKey(), StorageClass.Glacier, roomStations);
             syncRoomStationsS3("current", StorageClass.Standard, roomStations);
         } catch (IOException e) {
@@ -78,18 +86,34 @@ public class LabStatsSync implements RequestStreamHandler {
         }
     }
 
-    RoomStation[] getRoomStationsLabStats(List<String> publicDataSets) throws IOException {
-        RoomStation[] roomStationArray = new RoomStation[publicDataSets.size()];
-        for (int i = 0; i < publicDataSets.size(); i++) {
-            roomStationArray[i] = getRoomStationsLabStats(publicDataSets.get(i));
+    RoomStation[] getLabStatsRoomStations(LabStatsConfig config) throws IOException {
+        List<RoomStation> roomStations = new ArrayList<>();
+        for (Map.Entry<String, LabStatsConfig.BuildingRooms> building : config.entrySet()) {
+            for (Map.Entry<String, LabStatsConfig.BuildingRooms.RoomStationGroups> room : building.getValue().entrySet()) {
+                int on = 0;
+                int busy = 0;
+                int offline = 0;
+                for (int pcGroup : room.getValue().getPcGroups()) {
+                    LabStatsGroupStatusResponse response = getLabStatsGroupStatus(pcGroup);
+                    on += response.getOn();
+                    busy += response.getBusy();
+                    offline += response.getOffline();
+                }
+                for (int podGroup : room.getValue().getPodGroups()) {
+                    LabStatsGroupStatusResponse response = getLabStatsGroupStatus(podGroup);
+                    on += response.getOn();
+                    busy += response.getBusy();
+                    offline += response.getOffline();
+                }
+                roomStations.add(new RoomStation(building.getKey(), room.getKey(), on, busy, offline));
+            }
         }
-        return roomStationArray;
+        return roomStations.toArray(new RoomStation[0]);
     }
 
-    RoomStation getRoomStationsLabStats(String publicDataSet) throws IOException {
-        String uri = "https://portal.labstats.com/api/public/GetPublicApiData/" + publicDataSet;
+    LabStatsGroupStatusResponse getLabStatsGroupStatus(int groupId) throws IOException {
+        String uri = String.format("https://sea-api.labstats.com/groups/%d/status", groupId);
         try (CloseableHttpResponse response = getClient().execute(new HttpGet(uri))) {
-            // TODO: Check content
             return getReader().readValue(response.getEntity().getContent());
         } catch (Exception e) {
             throw new IOException("Error getting LabStats GET /" + uri, e);
@@ -116,11 +140,11 @@ public class LabStatsSync implements RequestStreamHandler {
         return getDateFormat().format(new Date());
     }
 
-    public String getCustomerId() {
-        return customerId;
+    public String getLabStatsApiKey() {
+        return labStatsApiKey;
     }
 
-    private ObjectReader getReader() {
+    ObjectReader getReader() {
         return reader;
     }
 
@@ -132,15 +156,15 @@ public class LabStatsSync implements RequestStreamHandler {
         return s3;
     }
 
-    private CloseableHttpClient getClient() {
+    CloseableHttpClient getClient() {
         return client;
-    }
-
-    List<String> getPublicDataSets() {
-        return publicDataSets;
     }
 
     private SimpleDateFormat getDateFormat() {
         return dateFormat;
+    }
+
+    LabStatsConfig getConfig() {
+        return config;
     }
 }

@@ -6,22 +6,25 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.util.IOUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.sydneyuni.myuni.models.RoomStation;
-import edu.sydneyuni.myuni.models.RoomStationTest;
+import edu.sydneyuni.myuni.models.*;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 class LabStatsSyncTest {
@@ -29,12 +32,11 @@ class LabStatsSyncTest {
     private AmazonS3 s3Mock;
     private LabStatsSync lambda;
     private final String bucketName = "test";
-    private final String customerId = "sydney_uni";
 
     @BeforeEach
     void setUp() {
         s3Mock = Mockito.mock(AmazonS3.class);
-        lambda = new LabStatsSync(s3Mock, bucketName, customerId);
+        lambda = new LabStatsSync(s3Mock, bucketName, "sydney_uni");
     }
 
     @Test
@@ -47,19 +49,30 @@ class LabStatsSyncTest {
     void testGetRoomStationsLabStats() throws IOException {
         LabStatsSync lambdaMock = mock(LabStatsSync.class);
 
-        when(lambdaMock.getRoomStationsLabStats(ArgumentMatchers.<String>anyList())).thenCallRealMethod();
+        CloseableHttpClient clientMock = mock(CloseableHttpClient.class);
+        CloseableHttpResponse responseMock = mock(CloseableHttpResponse.class);
+        HttpEntity httpEntityMock = mock(HttpEntity.class);
+        when(httpEntityMock.getContent()).thenAnswer(new Answer<InputStream>() {
+            @Override
+            public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return new ByteArrayInputStream(
+                        new ObjectMapper().writeValueAsBytes(
+                                new LabStatsGroupStatusResponse(10, 100, 1000)));
+            }
+        });
+        when(responseMock.getEntity()).thenReturn(httpEntityMock);
+        when(clientMock.execute(any(HttpUriRequest.class))).thenReturn(responseMock);
+        when(lambdaMock.getClient()).thenReturn(clientMock);
 
-        RoomStation s = RoomStationTest.generate();
-        when(lambdaMock.getRoomStationsLabStats(anyString())).thenReturn(s);
+        when(lambdaMock.getReader()).thenReturn(lambda.getReader());
 
-        // Test every public data set is fetched.
-        RoomStation[] ans = lambdaMock.getRoomStationsLabStats(Arrays.asList("test", "test1"));
-        verify(lambdaMock, times(2)).getRoomStationsLabStats(anyString());
-        assertEquals(2, ans.length);
-        assertArrayEquals(new RoomStation[]{s, s}, ans);
+        LabStatsConfig config = LabStatsConfigTest.generate();
+        when(lambdaMock.getLabStatsRoomStations(config)).thenCallRealMethod();
+        when(lambdaMock.getLabStatsGroupStatus(anyInt())).thenCallRealMethod();
+        RoomStation[] ans = lambdaMock.getLabStatsRoomStations(config);
+
+        assertEquals(1, ans.length);
     }
-
-    // TODO: Test transform of LabStats response to RoomStation.
 
     @Test
     void testSyncRoomStationsS3() throws IOException {
@@ -83,11 +96,8 @@ class LabStatsSyncTest {
     void testHandleRequest() throws IOException {
         LabStatsSync lambdaMock = mock(LabStatsSync.class);
 
-        List<String> publicDataSets = Collections.singletonList("test");
-        when(lambdaMock.getPublicDataSets()).thenReturn(publicDataSets);
-
         RoomStation[] arr = RoomStationTest.generateArray();
-        when(lambdaMock.getRoomStationsLabStats(publicDataSets)).thenReturn(arr);
+        when(lambdaMock.getLabStatsRoomStations(lambdaMock.getConfig())).thenReturn(arr);
 
         String bucketKey = "test";
         when(lambdaMock.getBucketKey()).thenReturn(bucketKey);
@@ -96,7 +106,7 @@ class LabStatsSyncTest {
         lambdaMock.handleRequest(null, null, null);
 
         // Testing it extracts LabStats once, uploads a glacier tier stations file and current stations file.
-        verify(lambdaMock, times(1)).getRoomStationsLabStats(publicDataSets);
+        verify(lambdaMock, times(1)).getLabStatsRoomStations(lambdaMock.getConfig());
         verify(lambdaMock, times(1)).syncRoomStationsS3(bucketKey, StorageClass.Glacier, arr);
         verify(lambdaMock, times(1)).syncRoomStationsS3("current", StorageClass.Standard, arr);
     }
