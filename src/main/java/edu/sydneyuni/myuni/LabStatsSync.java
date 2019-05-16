@@ -36,7 +36,7 @@ public class LabStatsSync implements RequestStreamHandler {
     private final String bucketName;
     private final String labStatsApiKey;
     private CloseableHttpClient client;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd/hh-mm");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd/HH-mm");
     private static final Logger logger = LogManager.getLogger(LabStatsSync.class);
     private final LabStatsConfig config;
 
@@ -136,8 +136,12 @@ public class LabStatsSync implements RequestStreamHandler {
         return bucketName;
     }
 
+    String getBucketKey(Date date) {
+        return getDateFormat().format(date);
+    }
+
     String getBucketKey() {
-        return getDateFormat().format(new Date());
+        return getBucketKey(new Date());
     }
 
     public String getLabStatsApiKey() {
@@ -160,7 +164,7 @@ public class LabStatsSync implements RequestStreamHandler {
         return client;
     }
 
-    private SimpleDateFormat getDateFormat() {
+    SimpleDateFormat getDateFormat() {
         return dateFormat;
     }
 

@@ -22,6 +22,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,9 +43,13 @@ class LabStatsSyncTest {
     }
 
     @Test
-    void testGetBucketKey() {
-        String bucketKey = lambda.getBucketKey();
-        assertNotNull(bucketKey);
+    void testGetBucketKey() throws ParseException {
+        assertNotNull(lambda.getBucketKey());
+        assertNotNull(lambda.getDateFormat().parse(lambda.getBucketKey()));
+        assertEquals("1970-01-02/10-00", lambda.getBucketKey(new Date(TimeUnit.DAYS.toMillis(1))));
+        assertEquals("1970-01-01/13-00", lambda.getBucketKey(new Date(TimeUnit.HOURS.toMillis(3))));
+        assertEquals("1970-01-01/10-02", lambda.getBucketKey(new Date(TimeUnit.MINUTES.toMillis(2))));
+        assertEquals("1971-05-16/10-00", lambda.getBucketKey(new Date(TimeUnit.DAYS.toMillis(500))));
     }
 
     @Test
