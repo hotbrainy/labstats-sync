@@ -43,7 +43,7 @@ public class RoomStationsQuery implements RequestStreamHandler {
     }
 
     RoomStation[] getRoomStationsS3() throws IOException {
-        try (S3Object object = s3.getObject(getBucketName(), "current")) {
+        try (S3Object object = getS3().getObject(getBucketName(), "current")) {
             return getReader().readValue(object.getObjectContent());
         }
     }

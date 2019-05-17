@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.util.IOUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.sydneyuni.myuni.models.*;
+import edu.sydneyuni.myuni.models.labstats.GroupStatusResponse;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -53,35 +54,6 @@ class LabStatsSyncTest {
     }
 
     @Test
-    void testGetRoomStationsLabStats() throws IOException {
-        LabStatsSync lambdaMock = mock(LabStatsSync.class);
-
-        CloseableHttpClient clientMock = mock(CloseableHttpClient.class);
-        CloseableHttpResponse responseMock = mock(CloseableHttpResponse.class);
-        HttpEntity httpEntityMock = mock(HttpEntity.class);
-        when(httpEntityMock.getContent()).thenAnswer(new Answer<InputStream>() {
-            @Override
-            public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return new ByteArrayInputStream(
-                        new ObjectMapper().writeValueAsBytes(
-                                new LabStatsGroupStatusResponse(10, 100, 1000)));
-            }
-        });
-        when(responseMock.getEntity()).thenReturn(httpEntityMock);
-        when(clientMock.execute(any(HttpUriRequest.class))).thenReturn(responseMock);
-        when(lambdaMock.getClient()).thenReturn(clientMock);
-
-        when(lambdaMock.getReader()).thenReturn(lambda.getReader());
-
-        LabStatsConfig config = LabStatsConfigTest.generate();
-        when(lambdaMock.getLabStatsRoomStations(config)).thenCallRealMethod();
-        when(lambdaMock.getLabStatsGroupStatus(anyInt())).thenCallRealMethod();
-        RoomStation[] ans = lambdaMock.getLabStatsRoomStations(config);
-
-        assertEquals(1, ans.length);
-    }
-
-    @Test
     void testSyncRoomStationsS3() throws IOException {
         RoomStation[] arr = RoomStationTest.generateArray();
         String bucketKey = "test";
@@ -104,7 +76,7 @@ class LabStatsSyncTest {
         LabStatsSync lambdaMock = mock(LabStatsSync.class);
 
         RoomStation[] arr = RoomStationTest.generateArray();
-        when(lambdaMock.getLabStatsRoomStations(lambdaMock.getConfig())).thenReturn(arr);
+        when(lambdaMock.getLabStatsRoomStations(lambdaMock.getUSydCampuses())).thenReturn(arr);
 
         String bucketKey = "test";
         when(lambdaMock.getBucketKey()).thenReturn(bucketKey);
@@ -113,7 +85,8 @@ class LabStatsSyncTest {
         lambdaMock.handleRequest(null, null, null);
 
         // Testing it extracts LabStats once, uploads a glacier tier stations file and current stations file.
-        verify(lambdaMock, times(1)).getLabStatsRoomStations(lambdaMock.getConfig());
+        USydCampuses campuses = lambdaMock.getUSydCampuses();
+        verify(lambdaMock, times(1)).getLabStatsRoomStations(campuses);
         verify(lambdaMock, times(1)).syncRoomStationsS3(bucketKey, StorageClass.Glacier, arr);
         verify(lambdaMock, times(1)).syncRoomStationsS3("current", StorageClass.Standard, arr);
     }
