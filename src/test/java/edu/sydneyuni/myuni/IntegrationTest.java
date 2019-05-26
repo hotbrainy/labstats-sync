@@ -66,6 +66,11 @@ class IntegrationTest {
         RoomStation[] arr = objectMapper.readValue(object.getObjectContent(), RoomStation[].class);
         assertNotNull(arr);
 
+        for (RoomStation station: arr) {
+            assertTrue(station.getAvailable() + station.getAvailablePods() + station.getBusy() + station.getBusyPods() + station.getOffline() + station.getOfflinePods() > 0,
+                    String.format("No stations found in %s - %s - %s", station.getCampus(), station.getBuilding(), station.getRoom()));
+        }
+
         RoomStationsQuery query = new RoomStationsQuery(s3, bucketName);
         try (PipedInputStream inputStream = new PipedInputStream(); PipedOutputStream outputStream = new PipedOutputStream(inputStream)) {
             query.handleRequest(null, outputStream, null);
