@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+    AWS Serverless Labstats API and Sync deployed via SAM, Serverless Application Model. 
+    
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+    Function:
+        Timeout: 300
+Parameters:
+  Application: 
+    Default: lbst
+    Description: "The Application name, generally the Application Context from the SDDC. "
+    Type: String
+    MaxLength: 4
+    MinLength: 4
+  Lifecycle:
+    Description: "This is the application Lifecycle for tagging, between Development, Test and Production, by default is Development"
+    Default: Development
+    AllowedValues: [Development,Test,Production]
+    Type: String
+  Environment:
+    Default: D
+    Description: "This is the environment (D, T or P)"
+    Type: String
+    AllowedValues: [D,T,P]
+    ConstraintDescription: must specify D, T or P.
+Resources:
+  SyncFunction:
+      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+      Properties:
+          Tags:
+              Application: !Ref Application
+              Program: "Shared"
+          CodeUri: FunctionSource
+          Handler: edu.sydneyuni.myuni.LabStatsSync
+          Runtime: java8
+          MemorySize: 128
+          Timeout: 120
+          Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+              Variables:
+                  LABSTATS_API_KEY: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
+          Policies:
+              - AWSLambdaExecute # Managed Policy
+              - Version: '2012-10-17' # Policy Document
+                Statement:
+                  - Sid: ReadSSMParameters
+                    Effect: Allow
+                    Action:
+                      - 'ssm:GetParameters'
+                      - 'ssm:GetParametersByPath'
+                    Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
+Outputs:
+    SyncFunction:
+      Description: "${SyncFunction} ARN"
+      Value: !GetAtt SyncFunction.Arn
+      
