@@ -37,11 +37,18 @@ Resources:
           Runtime: java8
           MemorySize: 128
           Timeout: 120
+          Events:
+            SyncEvent:
+              Type: Schedule
+                Properties:
+                  Schedule: rate(1 minute)
           Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
               Variables:
                   LABSTATS_API_KEY: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
+                  TABLE_NAME: !Ref DynamoDBTable
           Policies:
               - AWSLambdaExecute # Managed Policy
+              - AmazonDynamoDBFullAccess
               - Version: '2012-10-17' # Policy Document
                 Statement:
                   - Sid: ReadSSMParameters
@@ -50,6 +57,23 @@ Resources:
                       - 'ssm:GetParameters'
                       - 'ssm:GetParametersByPath'
                     Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    TableName:
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: K
+          AttributeType: N
+        - AttributeName: S
+          AttributeType: S
+      KeySchema:
+        - AttributeName: K
+          KeyType: HASH
+        - AttributeName: S
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 1
 Outputs:
     SyncFunction:
       Description: "${SyncFunction} ARN"
