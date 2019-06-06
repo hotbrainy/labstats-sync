@@ -15,7 +15,7 @@ import java.io.PipedOutputStream;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.*;
 
-class RoomStationsQueryTest {
+public class RoomStationsQueryTest {
 
     private RoomStationDao daoMock;
     private RoomStationsQuery lambda;

@@ -10,7 +10,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class GroupStationsResponseTest {
+public class GroupStationsResponseTest {
 
     static GroupStationsResponse generate() {
         return new GroupStationsResponse(new Station[]{new Station(1), new Station(2)});

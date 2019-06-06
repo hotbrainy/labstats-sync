@@ -12,7 +12,7 @@ import java.io.IOException;
 
 import static org.mockito.Mockito.*;
 
-class LabStatsSyncTest {
+public class LabStatsSyncTest {
 
     private RoomStationDao daoMock;
     private LabStatsClient labStatsClientMock;

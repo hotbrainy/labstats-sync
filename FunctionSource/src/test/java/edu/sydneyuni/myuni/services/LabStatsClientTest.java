@@ -10,7 +10,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class LabStatsClientTest {
+public class LabStatsClientTest {
 
     @Test
     void testGetRoomStations() throws IOException {

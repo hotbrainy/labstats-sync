@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(LocalstackDockerExtension.class)
 @LocalstackDockerProperties(services = {"dynamodb"})
-class RoomStationDaoTest {
+public class RoomStationDaoTest {
 
     private AmazonDynamoDB dynamoDBMock;
     private AmazonDynamoDB dynamoDB;
