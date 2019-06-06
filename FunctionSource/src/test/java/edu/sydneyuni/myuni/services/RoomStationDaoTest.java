@@ -22,9 +22,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(LocalstackDockerExtension.class)
-@LocalstackDockerProperties(services = {"dynamodb"})
 public class RoomStationDaoTest {
+
+    /*
 
     private AmazonDynamoDB dynamoDBMock;
     private AmazonDynamoDB dynamoDB;
@@ -64,5 +64,5 @@ public class RoomStationDaoTest {
         RoomStation[] arr = RoomStationTest.generateArray();
         dao.insert(arr);
         assertArrayEquals(arr, dao.getLatestRoomStations());
-    }
+    }*/
 }
