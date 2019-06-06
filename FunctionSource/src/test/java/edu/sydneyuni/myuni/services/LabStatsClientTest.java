@@ -18,7 +18,6 @@ public class LabStatsClientTest {
         if (StringUtils.isBlank(labStatsAPIKey)) {
             // Don't run this test on every CI. //TODO: Mock LabStats response.
             return;
-            //throw new IllegalArgumentException("No LABSTATS_API_KEY");
         }
 
         LabStatsClient labStatsClient = new LabStatsClient(labStatsAPIKey);
