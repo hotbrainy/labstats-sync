@@ -45,3 +45,4 @@ target/
 .idea_modules/
 
 .localstack
+.aws-sam
