@@ -7,7 +7,7 @@ pipelines:
             - export AWS_ACCESS_KEY_ID=$CODERS_AWS_ACCESS_KEY_ID
             - export AWS_SECRET_ACCESS_KEY=$CODERS_AWS_SECRET_ACCESS_KEY
             - apk add py-pip
-            - pip install aws-sam-cli
+            - pip install --user aws-sam-cli
             - codebucket="cf-templates-u6grlzjqw4qg-ap-southeast-2"
             - sam build -b ./build -t labstats.yaml
             #- sam package --template-file build/template.yaml --output-template-file packaged.yaml --s3-bucket $codebucket
