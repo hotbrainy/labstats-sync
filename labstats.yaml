@@ -48,7 +48,14 @@ Resources:
                   TABLE_NAME: !Ref DynamoDBTable
           Policies:
               - AWSLambdaExecute # Managed Policy
-              - AmazonDynamoDBFullAccess
+              - Version: '2012-10-17'
+                Statement:
+                  - Sid: DynamoDBAccess
+                    Effect: Allow
+                    Action:
+                      - 'dynamodb:Query'
+                      - 'dynamodb:PutItem'
+                    Resource: !Sub '${DynamoDBTable.Arn}'
               - Version: '2012-10-17' # Policy Document
                 Statement:
                   - Sid: ReadSSMParameters
