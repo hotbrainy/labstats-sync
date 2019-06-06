@@ -1,12 +1,17 @@
-image: maven:3.3.9
-
 pipelines:
   default:
     - step:
+        name: Build and test
         caches:
           - maven
+        image: maven:3.3.9
         services:
           - docker
         script:
           - cd ./FunctionSource
           - mvn -B verify    # -B batch mode makes Maven less verbose
+    - step:
+        name: Deploy to AWS
+        image: atlassian/pipelines-awscli
+        script:
+          - echo "Echo360"
