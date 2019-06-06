@@ -31,7 +31,7 @@ Resources:
     Properties: 
       Description: "ScheduledRule"
       # Schedule rule in UTC. 
-      ScheduleExpression: "cron(* * * * * *)"
+      ScheduleExpression: "rate(1 minute)"
       State: "ENABLED"
       Targets: 
         - 
