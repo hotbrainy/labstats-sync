@@ -8,5 +8,5 @@ pipelines:
             - export AWS_SECRET_ACCESS_KEY=$CODERS_AWS_SECRET_ACCESS_KEY
             - export codebucket="cf-templates-u6grlzjqw4qg-ap-southeast-2"
             - sam build -b ./build -t ./labstats.yaml
-            #- sam package --template-file build/template.yaml --output-template-file packaged.yaml --s3-bucket $codebucket
-            #- sam deploy --template-file packaged.yaml --parameter-overrides Lifecycle=Development Environment=D Application=lbst --capabilities CAPABILITY_IAM --stack-name lbstSyncFunc
+            - sam package --template-file build/template.yaml --output-template-file packaged.yaml --s3-bucket $codebucket
+            - sam deploy --template-file packaged.yaml --parameter-overrides Lifecycle=Development Environment=D Application=lbst --capabilities CAPABILITY_IAM --stack-name lbstSyncFunc
