@@ -26,6 +26,28 @@ Parameters:
     AllowedValues: [D,T,P]
     ConstraintDescription: must specify D, T or P.
 Resources:
+  ScheduledRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "ScheduledRule"
+      # Schedule rule in UTC. 
+      ScheduleExpression: "cron(* * * * * *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: !GetAtt SyncFunction.Arn
+          Id: "SyncFunction"
+  PermissionForEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: 
+        Ref: "SyncFunction"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRule"
+          - "Arn"
   SyncFunction:
       Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
       Properties:
@@ -37,11 +59,6 @@ Resources:
           Runtime: java8
           MemorySize: 128
           Timeout: 120
-          Events:
-            SyncEvent:
-              Type: Schedule
-                Properties:
-                  Schedule: rate(1 minute)
           Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
               Variables:
                   LABSTATS_API_KEY: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
@@ -66,21 +83,27 @@ Resources:
                     Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
-    TableName: LabStats
     Properties:
-      AttributeDefinitions:
-        - AttributeName: K
-          AttributeType: N
-        - AttributeName: S
-          AttributeType: S
-      KeySchema:
-        - AttributeName: K
-          KeyType: HASH
-        - AttributeName: S
-          KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 1
+        AttributeDefinitions:
+          - AttributeName: K
+            AttributeType: N
+          - AttributeName: S
+            AttributeType: S
+        KeySchema:
+          - AttributeName: K
+            KeyType: HASH
+          - AttributeName: S
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 1
+        SSESpecification:
+          SSEEnabled: true
+        Tags:
+          - Key: Application
+            Value: !Ref Application
+          - Key: Program
+            Value: Shared
 Outputs:
     SyncFunction:
       Description: "${SyncFunction} ARN"
