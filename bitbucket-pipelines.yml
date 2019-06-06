@@ -6,4 +6,5 @@ pipelines:
         caches:
           - maven
         script:
+          - cd ./FunctionSource
           - mvn -B verify    # -B batch mode makes Maven less verbose
