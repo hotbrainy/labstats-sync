@@ -5,6 +5,8 @@ pipelines:
     - step:
         caches:
           - maven
+        services:
+          - docker
         script:
           - cd ./FunctionSource
           - mvn -B verify    # -B batch mode makes Maven less verbose
