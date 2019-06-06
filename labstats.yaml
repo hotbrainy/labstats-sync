@@ -59,7 +59,7 @@ Resources:
                     Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
-    TableName:
+    TableName: LabStats
     Properties:
       AttributeDefinitions:
         - AttributeName: K
