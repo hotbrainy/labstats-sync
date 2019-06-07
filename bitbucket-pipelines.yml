@@ -11,7 +11,7 @@ pipelines:
     - step:
         name: Deploy to AWS
         image: lambci/lambda:build-java8
-        deployment: Coders2
+        deployment: test
         script:
           - export AWS_ACCESS_KEY_ID=$CODERS_AWS_ACCESS_KEY_ID
           - export AWS_SECRET_ACCESS_KEY=$CODERS_AWS_SECRET_ACCESS_KEY
