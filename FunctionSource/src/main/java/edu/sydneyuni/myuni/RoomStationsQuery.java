@@ -37,13 +37,13 @@ public class RoomStationsQuery implements RequestStreamHandler {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, String> responseHeaders = new HashMap<>(1);
             responseHeaders.put(HttpHeaders.CONTENT_TYPE, "application/json");
-            mapper.writeValue(outputStream, mapper.writeValueAsString(
+            mapper.writeValue(outputStream,
                     new ApiGatewayProxyResponse.ApiGatewayProxyResponseBuilder()
                             .withStatusCode(200)
                             .withHeaders(responseHeaders)
                             .withBody(mapper.writeValueAsString(roomStations))
                             .build()
-            ));
+            );
         } catch (Exception e) {
             logger.error("Error getting RoomStations from DynamoDB", e);
         }

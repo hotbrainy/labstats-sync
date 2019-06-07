@@ -1,6 +1,7 @@
 package edu.sydneyuni.myuni;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.sydneyuni.myuni.models.ApiGatewayProxyResponse;
 import edu.sydneyuni.myuni.models.RoomStation;
 import edu.sydneyuni.myuni.models.RoomStationTest;
 import edu.sydneyuni.myuni.services.RoomStationDao;
@@ -30,15 +31,14 @@ public class RoomStationsQueryTest {
     void testHandleRequest() throws IOException {
         RoomStation[] arr = RoomStationTest.generateArray();
         when(daoMock.getLatestRoomStations()).thenReturn(arr);
-        when(daoMock.getWriter()).thenReturn(new ObjectMapper().writerFor(RoomStation[].class));
 
         try (PipedInputStream inputStream = new PipedInputStream(); PipedOutputStream outputStream = new PipedOutputStream(inputStream)) {
             lambda.handleRequest(null, outputStream, null);
 
             verify(daoMock, times(1)).getLatestRoomStations();
-
-            RoomStation[] ans = new ObjectMapper().readerFor(RoomStation[].class).readValue(inputStream);
-            assertArrayEquals(arr, ans);
+            ObjectMapper mapper = new ObjectMapper();
+            ApiGatewayProxyResponse ans = mapper.readValue(inputStream, ApiGatewayProxyResponse.class);
+            assertArrayEquals(arr, mapper.readValue(ans.getBody(), RoomStation[].class));
         }
     }
 }
