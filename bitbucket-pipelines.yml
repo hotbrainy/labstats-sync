@@ -1,13 +1,21 @@
 pipelines:
   default:
-    - step:
-        name: Deploy to AWS
-        image: lambci/lambda:build-java8
-        script:
+    - parralel:
+      - step:
+          name: Test
+          image: maven:3.3.9
+          caches:
+            - maven
+          script:
+            - cd ./FunctionSource
+            - mvn -B verify
+      - step:
+          name: Deploy to AWS
+          image: lambci/lambda:build-java8
+          deployment: Coders2
+          script:
             - export AWS_ACCESS_KEY_ID=$CODERS_AWS_ACCESS_KEY_ID
             - export AWS_SECRET_ACCESS_KEY=$CODERS_AWS_SECRET_ACCESS_KEY
-            - export codebucket="cf-templates-u6grlzjqw4qg-ap-southeast-2"
-            - export AWS_DEFAULT_REGION="ap-southeast-2"
             - sam build -b ./build -t ./template.yaml
-            - sam package --template-file build/template.yaml --output-template-file packaged.yaml --s3-bucket $codebucket
+            - sam package --template-file build/template.yaml --output-template-file packaged.yaml --s3-bucket $CODERS_AWS_BUCKET
             - sam deploy --template-file packaged.yaml --parameter-overrides Lifecycle=Development Environment=D Application=lbst --capabilities CAPABILITY_IAM --stack-name lbstSyncFunc
