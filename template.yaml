@@ -54,7 +54,7 @@ Resources:
         Application: !Ref Application
         Program: "Shared"
       CodeUri: FunctionSource
-      Handler: edu.sydneyuni.myuni.LabStatsSync::handleRequest
+      Handler: edu.sydneyuni.myuni.LabStatsSync
       Runtime: java8
       MemorySize: 170
       Timeout: 120
@@ -62,12 +62,6 @@ Resources:
         Variables:
           LABSTATS_API_KEY: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
           TABLE_NAME: !Ref DynamoDBTable
-      Events:
-        HttpGet:
-          Type: Api
-          Properties:
-            Path: '/labstats-sync'
-            Method: get
       Policies:
         - AWSLambdaExecute # Managed Policy
         - Version: '2012-10-17'
