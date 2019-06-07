@@ -39,7 +39,9 @@ public class RoomStationsQuery implements RequestHandler<Object, RoomStation[]> 
     @Override
     public RoomStation[] handleRequest(Object o, Context context) {
         try {
+            logger.info("hi");
             RoomStation[] roomStations = getDao().getLatestRoomStations();
+            logger.info("hi2");
             return roomStations;
         } catch (Exception e) {
             logger.error("Error getting RoomStations from DynamoDB", e);

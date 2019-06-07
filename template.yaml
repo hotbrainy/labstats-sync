@@ -92,7 +92,7 @@ Resources:
         Application: !Ref Application
         Program: "Shared"
       CodeUri: FunctionSource
-      Handler: edu.sydneyuni.myuni.RoomStationsQuery::handleRequest
+      Handler: edu.sydneyuni.myuni.RoomStationsQuery
       Runtime: java8
       MemorySize: 170
       Timeout: 120
@@ -106,7 +106,7 @@ Resources:
             - Sid: DynamoDBAccess
               Effect: Allow
               Action:
-                - 'dynamodb:Query'
+                - 'dynamodb:*'
               Resource: !Sub '${DynamoDBTable.Arn}'
         - Version: '2012-10-17' # Policy Document
           Statement:
