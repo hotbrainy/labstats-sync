@@ -120,14 +120,14 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: Key
+        - AttributeName: K
           AttributeType: N
-        - AttributeName: Range
+        - AttributeName: R
           AttributeType: S
       KeySchema:
-        - AttributeName: Key
+        - AttributeName: K
           KeyType: HASH
-        - AttributeName: Range
+        - AttributeName: R
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5

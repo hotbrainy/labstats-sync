@@ -20,9 +20,9 @@ public class RoomStationDao implements Dao<RoomStation[]> {
 
     private final AmazonDynamoDB dynamoDB;
     private final String tableName;
-    private static final String HASH = "Key";
-    private static final String RANGE = "Range";
-    private static final String VALUE = "Value";
+    private static final String HASH = "K";
+    private static final String RANGE = "R";
+    private static final String VALUE = "V";
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd/HH-mm");
     private final ObjectWriter writer = new ObjectMapper().writerFor(RoomStation[].class);
     private final ObjectReader reader = new ObjectMapper().readerFor(RoomStation[].class);
@@ -56,8 +56,7 @@ public class RoomStationDao implements Dao<RoomStation[]> {
                 .withKeyConditionExpression(String.format("%s = :v_k AND %s <= :v_r", HASH, RANGE))
                 .addExpressionAttributeValuesEntry(":v_k", new AttributeValue().withN("0"))
                 .addExpressionAttributeValuesEntry(":v_r", new AttributeValue()
-                        .withS(getDateFormat()
-                                .format(new Date()))));
+                        .withS(getDateKey())));
         // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_ResponseElements
         if (result.getSdkHttpMetadata().getHttpStatusCode() != 200 || result.getCount() <= 0) {
             throw new IOException(String.format("%s: Error querying RoomStations into DynamoDB", result.getSdkResponseMetadata().getRequestId()));
@@ -65,15 +64,11 @@ public class RoomStationDao implements Dao<RoomStation[]> {
         return getReader().readValue(result.getItems().get(0).get(VALUE).getS());
     }
 
-    public AmazonDynamoDB getDynamoDB() {
-        return dynamoDB;
-    }
-
     private SimpleDateFormat getDateFormat() {
         return dateFormat;
     }
 
-    String getDateKey() {
+    private String getDateKey() {
         return getDateKey(new Date());
     }
 
