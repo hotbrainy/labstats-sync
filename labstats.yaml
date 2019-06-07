@@ -1,14 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-    AWS Serverless Labstats API and Sync deployed via SAM, Serverless Application Model. 
-    
+  AWS Serverless Labstats API and Sync deployed via SAM, Serverless Application Model.
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
-    Function:
-        Timeout: 300
+  Function:
+    Timeout: 300
 Parameters:
-  Application: 
+  Application:
     Default: lbst
     Description: "The Application name, generally the Application Context from the SDDC. "
     Type: String
@@ -26,86 +26,85 @@ Parameters:
     AllowedValues: [D,T,P]
     ConstraintDescription: must specify D, T or P.
 Resources:
-  ScheduledRule: 
+  ScheduledRule:
     Type: AWS::Events::Rule
-    Properties: 
+    Properties:
       Description: "ScheduledRule"
       # Schedule rule in UTC. 
       ScheduleExpression: "rate(1 minute)"
       State: "ENABLED"
-      Targets: 
-        - 
-          Arn: !GetAtt SyncFunction.Arn
+      Targets:
+        - Arn: !GetAtt SyncFunction.Arn
           Id: "SyncFunction"
-  PermissionForEventsToInvokeLambda: 
+  PermissionForEventsToInvokeLambda:
     Type: AWS::Lambda::Permission
-    Properties: 
-      FunctionName: 
+    Properties:
+      FunctionName:
         Ref: "SyncFunction"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
-      SourceArn: 
-        Fn::GetAtt: 
+      SourceArn:
+        Fn::GetAtt:
           - "ScheduledRule"
           - "Arn"
   SyncFunction:
-      Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-      Properties:
-          Tags:
-              Application: !Ref Application
-              Program: "Shared"
-          CodeUri: FunctionSource
-          Handler: edu.sydneyuni.myuni.LabStatsSync
-          Runtime: java8
-          MemorySize: 170
-          Timeout: 120
-          Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
-              Variables:
-                  LABSTATS_API_KEY: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
-                  TABLE_NAME: !Ref DynamoDBTable
-          Policies:
-              - AWSLambdaExecute # Managed Policy
-              - Version: '2012-10-17'
-                Statement:
-                  - Sid: DynamoDBAccess
-                    Effect: Allow
-                    Action:
-                      - 'dynamodb:Query'
-                      - 'dynamodb:PutItem'
-                    Resource: !Sub '${DynamoDBTable.Arn}'
-              - Version: '2012-10-17' # Policy Document
-                Statement:
-                  - Sid: ReadSSMParameters
-                    Effect: Allow
-                    Action:
-                      - 'ssm:GetParameters'
-                      - 'ssm:GetParametersByPath'
-                    Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Tags:
+        Application: !Ref Application
+        Program: "Shared"
+      CodeUri: FunctionSource
+      Handler: edu.sydneyuni.myuni.LabStatsSync
+      Runtime: java8
+      MemorySize: 170
+      Timeout: 120
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          LABSTATS_API_KEY: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
+          TABLE_NAME: !Ref DynamoDBTable
+      Policies:
+        - AWSLambdaExecute # Managed Policy
+        - Version: '2012-10-17'
+          Statement:
+            - Sid: DynamoDBAccess
+              Effect: Allow
+              Action:
+                - 'dynamodb:PutItem'
+              Resource: !Sub '${DynamoDBTable.Arn}'
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Sid: ReadSSMParameters
+              Effect: Allow
+              Action:
+                - 'ssm:GetParameters'
+                - 'ssm:GetParametersByPath'
+              Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
+  
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
-        AttributeDefinitions:
-          - AttributeName: Key
-            AttributeType: N
-          - AttributeName: Range
-            AttributeType: S
-        KeySchema:
-          - AttributeName: Key
-            KeyType: HASH
-          - AttributeName: Range
-            KeyType: RANGE
-        ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 1
-        SSESpecification:
-          SSEEnabled: true
-        Tags:
-          - Key: Application
-            Value: !Ref Application
-          - Key: Program
-            Value: Shared
+      AttributeDefinitions:
+        - AttributeName: Key
+          AttributeType: N
+        - AttributeName: Range
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Key
+          KeyType: HASH
+        - AttributeName: Range
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 1
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: Program
+          Value: Shared
 Outputs:
-    SyncFunction:
-      Description: "${SyncFunction} ARN"
-      Value: !GetAtt SyncFunction.Arn
+  SyncFunction:
+    Description: "${SyncFunction} ARN"
+    Value: !GetAtt SyncFunction.Arn
       
