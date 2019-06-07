@@ -57,7 +57,7 @@ Resources:
           CodeUri: FunctionSource
           Handler: edu.sydneyuni.myuni.LabStatsSync
           Runtime: java8
-          MemorySize: 256
+          MemorySize: 170
           Timeout: 120
           Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
               Variables:
@@ -87,7 +87,7 @@ Resources:
         AttributeDefinitions:
           - AttributeName: K
             AttributeType: N
-          - AttributeName: S
+          - AttributeName: R
             AttributeType: S
         KeySchema:
           - AttributeName: K
