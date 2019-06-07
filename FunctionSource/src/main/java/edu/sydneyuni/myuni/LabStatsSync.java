@@ -57,7 +57,7 @@ public class LabStatsSync implements RequestStreamHandler {
             RoomStation[] roomStations =  getLabStatsClient().getLabStatsRoomStations(getUSydCampuses());
             getDao().insert(roomStations);
         } catch (IOException e) {
-            logger.error("Error syncing LabStats to S3", e);
+            logger.error("Error syncing LabStats to DynamoDB", e);
         }
     }
 
