@@ -45,7 +45,7 @@ public class LabStatsSync implements RequestStreamHandler {
         this.labStatsClient = labStatsClient;
         try {
             uSydCampuses = new ObjectMapper().readValue(getClass().getClassLoader().getResourceAsStream("labstats.json"), USydCampuses.class);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Error opening labstats.json", e);
             throw new IllegalStateException("Error opening labstats.json", e);
         }
