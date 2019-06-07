@@ -11,6 +11,7 @@ import com.amazonaws.services.dynamodbv2.model.*;
 import edu.sydneyuni.myuni.models.RoomStation;
 import edu.sydneyuni.myuni.models.RoomStationTest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -22,9 +23,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(LocalstackDockerExtension.class)
+@LocalstackDockerProperties(services = {"dynamodb"})
+@Disabled
 public class RoomStationDaoTest {
-
-    /*
 
     private AmazonDynamoDB dynamoDBMock;
     private AmazonDynamoDB dynamoDB;
@@ -64,5 +66,5 @@ public class RoomStationDaoTest {
         RoomStation[] arr = RoomStationTest.generateArray();
         dao.insert(arr);
         assertArrayEquals(arr, dao.getLatestRoomStations());
-    }*/
+    }
 }

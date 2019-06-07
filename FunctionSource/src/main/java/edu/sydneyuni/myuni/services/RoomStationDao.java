@@ -20,8 +20,8 @@ public class RoomStationDao implements Dao<RoomStation[]> {
 
     private final AmazonDynamoDB dynamoDB;
     private final String tableName;
-    private static final String HASH = "K";
-    private static final String RANGE = "R";
+    static final String HASH = "K";
+    static final String RANGE = "R";
     private static final String VALUE = "V";
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd/HH-mm");
     private final ObjectWriter writer = new ObjectMapper().writerFor(RoomStation[].class);
@@ -64,15 +64,15 @@ public class RoomStationDao implements Dao<RoomStation[]> {
         return getReader().readValue(result.getItems().get(0).get(VALUE).getS());
     }
 
-    private SimpleDateFormat getDateFormat() {
+    SimpleDateFormat getDateFormat() {
         return dateFormat;
     }
 
-    private String getDateKey() {
+    String getDateKey() {
         return getDateKey(new Date());
     }
 
-    private String getDateKey(Date date) {
+    String getDateKey(Date date) {
         return getDateFormat().format(date);
     }
 
