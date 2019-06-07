@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class RoomStationsQuery implements RequestHandler<Object, RoomStation[]> {
+public class RoomStationsQuery implements RequestHandler<Object, String> {
 
     private final RoomStationDao dao;
     private static final Logger logger = LogManager.getLogger(RoomStationsQuery.class);
@@ -37,15 +37,13 @@ public class RoomStationsQuery implements RequestHandler<Object, RoomStation[]> 
     }
 
     @Override
-    public RoomStation[] handleRequest(Object o, Context context) {
+    public String handleRequest(Object o, Context context) {
         try {
-            logger.info("hi");
             RoomStation[] roomStations = getDao().getLatestRoomStations();
-            logger.info(getDao().getWriter().writeValueAsString(roomStations));
-            return roomStations;
+            return getDao().getWriter().writeValueAsString(roomStations);
         } catch (Exception e) {
             logger.error("Error getting RoomStations from DynamoDB", e);
         }
-        return new RoomStation[0];
+        return "[]";
     }
 }
