@@ -81,41 +81,41 @@ Resources:
               Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
   GetFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-      Properties:
-        Tags:
-          Application: !Ref Application
-          Program: "Shared"
-        CodeUri: FunctionSource
-        Handler: edu.sydneyuni.myuni.RoomStationsQuery
-        Runtime: java8
-        MemorySize: 170
-        Timeout: 120
-        Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
-          Variables:
-            TABLE_NAME: !Ref DynamoDBTable
-        Policies:
-          - AWSLambdaExecute # Managed Policy
-          - Version: '2012-10-17'
-            Statement:
-              - Sid: DynamoDBAccess
-                Effect: Allow
-                Action:
-                  - 'dynamodb:Query'
-                Resource: !Sub '${DynamoDBTable.Arn}'
-          - Version: '2012-10-17' # Policy Document
-            Statement:
-              - Sid: ReadSSMParameters
-                Effect: Allow
-                Action:
-                  - 'ssm:GetParameters'
-                  - 'ssm:GetParametersByPath'
-                Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
-        Events:
-          HttpGet:
-            Type: Api
-            Properties:
-              Path: '/room-stations'
-              Method: get
+    Properties:
+      Tags:
+        Application: !Ref Application
+        Program: "Shared"
+      CodeUri: FunctionSource
+      Handler: edu.sydneyuni.myuni.RoomStationsQuery
+      Runtime: java8
+      MemorySize: 170
+      Timeout: 120
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          TABLE_NAME: !Ref DynamoDBTable
+      Policies:
+        - AWSLambdaExecute # Managed Policy
+        - Version: '2012-10-17'
+          Statement:
+            - Sid: DynamoDBAccess
+              Effect: Allow
+              Action:
+                - 'dynamodb:Query'
+              Resource: !Sub '${DynamoDBTable.Arn}'
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Sid: ReadSSMParameters
+              Effect: Allow
+              Action:
+                - 'ssm:GetParameters'
+                - 'ssm:GetParametersByPath'
+              Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            Path: '/room-stations'
+            Method: get
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
