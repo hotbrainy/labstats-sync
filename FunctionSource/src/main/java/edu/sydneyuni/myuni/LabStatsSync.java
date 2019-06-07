@@ -33,7 +33,7 @@ public class LabStatsSync implements RequestStreamHandler {
     private static final Logger logger = LogManager.getLogger(LabStatsSync.class);
     private final USydCampuses uSydCampuses;
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unused") // Lambda needs a public no-arg constructor
     public LabStatsSync() {
         this(new RoomStationDao(AmazonDynamoDBClientBuilder.defaultClient(),
                 System.getenv("TABLE_NAME")),

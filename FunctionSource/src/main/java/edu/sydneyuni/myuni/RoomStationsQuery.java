@@ -14,8 +14,8 @@ public class RoomStationsQuery implements RequestStreamHandler {
 
     private final RoomStationDao dao;
 
-    @SuppressWarnings("unused")
-    RoomStationsQuery() {
+    @SuppressWarnings("unused") // Lambda needs a public no-arg constructor
+    public RoomStationsQuery() {
         this(new RoomStationDao(AmazonDynamoDBClientBuilder.defaultClient(), System.getenv("TABLE_NAME")));
     }
 
