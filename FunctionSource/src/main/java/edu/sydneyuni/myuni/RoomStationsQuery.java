@@ -41,7 +41,7 @@ public class RoomStationsQuery implements RequestHandler<Object, RoomStation[]> 
         try {
             logger.info("hi");
             RoomStation[] roomStations = getDao().getLatestRoomStations();
-            logger.info("hi2");
+            logger.info(getDao().getWriter().writeValueAsString(roomStations));
             return roomStations;
         } catch (Exception e) {
             logger.error("Error getting RoomStations from DynamoDB", e);
