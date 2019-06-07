@@ -20,9 +20,9 @@ public class RoomStationDao implements Dao<RoomStation[]> {
 
     private final AmazonDynamoDB dynamoDB;
     private final String tableName;
-    static final String HASH = "K";
-    static final String RANGE = "R";
-    private static final String VALUE = "V";
+    private static final String HASH = "Key";
+    private static final String RANGE = "Range";
+    private static final String VALUE = "Value";
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd/HH-mm");
     private final ObjectWriter writer = new ObjectMapper().writerFor(RoomStation[].class);
     private final ObjectReader reader = new ObjectMapper().readerFor(RoomStation[].class);
@@ -53,7 +53,7 @@ public class RoomStationDao implements Dao<RoomStation[]> {
                 .withLimit(1)
                 .withScanIndexForward(false)
                 .withProjectionExpression(VALUE)
-                .withKeyConditionExpression("K = :v_k AND R <= :v_r")
+                .withKeyConditionExpression(String.format("%s = :v_k AND %s <= :v_r", HASH, RANGE))
                 .addExpressionAttributeValuesEntry(":v_k", new AttributeValue().withN("0"))
                 .addExpressionAttributeValuesEntry(":v_r", new AttributeValue()
                         .withS(getDateFormat()
@@ -69,7 +69,7 @@ public class RoomStationDao implements Dao<RoomStation[]> {
         return dynamoDB;
     }
 
-    SimpleDateFormat getDateFormat() {
+    private SimpleDateFormat getDateFormat() {
         return dateFormat;
     }
 
@@ -77,7 +77,7 @@ public class RoomStationDao implements Dao<RoomStation[]> {
         return getDateKey(new Date());
     }
 
-    String getDateKey(Date date) {
+    private String getDateKey(Date date) {
         return getDateFormat().format(date);
     }
 
