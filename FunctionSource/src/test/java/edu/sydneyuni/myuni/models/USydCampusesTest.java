@@ -13,7 +13,7 @@ public class USydCampusesTest {
         USydCampuses config = new USydCampuses();
         config.put("Camperdown", new USydCampuses.CampusBuildings());
         config.get("Camperdown").put("Fisher Library", new USydCampuses.CampusBuildings.BuildingRooms());
-        config.get("Camperdown").get("Fisher Library").put("Level 2", new USydCampuses.CampusBuildings.BuildingRooms.RoomStationGroups(new int[]{1, 2}, new int[]{3}));
+        config.get("Camperdown").get("Fisher Library").put("Level 2", new USydCampuses.CampusBuildings.BuildingRooms.RoomStationGroups(new int[]{1215, 1216}, new int[]{1220}));
         return config;
     }
 

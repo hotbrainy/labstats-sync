@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class StationStatusTest {
+public class StationStatusTest {
 
     @Test
     void testJackson() throws IOException {
