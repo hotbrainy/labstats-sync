@@ -1,7 +1,6 @@
 version: 0.2
 
 phases:
-  install:
+  build:
     commands:
-      - echo Installing Gulp
-      - npm install 
+      - sam build -b ./build -t ./template.yaml
