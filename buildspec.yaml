@@ -1,6 +1,10 @@
 version: 0.2
 
 phases:
-  build:
-    commands:
-      - sam build -b ./build -t ./template.yaml
+    build:
+        commands:
+            - pip install --user aws-sam-cli
+            - USER_BASE_PATH=$(python -m site --user-base)
+            - export PATH=$PATH:$USER_BASE_PATH/bin
+            - sam build -t cloudformation.yml
+            - sam build -b ./build -t ./template.yaml
