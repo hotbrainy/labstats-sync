@@ -101,7 +101,6 @@ Resources:
               Effect: Allow
               Action:
                 - 'dynamodb:Query'
-                - 'dynamodb:Scan'
               Resource: !Sub '${DynamoDBTable.Arn}'
       Events:
         HttpGet:
