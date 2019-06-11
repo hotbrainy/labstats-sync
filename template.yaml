@@ -102,14 +102,6 @@ Resources:
               Action:
                 - 'dynamodb:*'
               Resource: !Sub '${DynamoDBTable.Arn}'
-        - Version: '2012-10-17' # Policy Document
-          Statement:
-            - Sid: ReadSSMParameters
-              Effect: Allow
-              Action:
-                - 'ssm:GetParameters'
-                - 'ssm:GetParametersByPath'
-              Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
       Events:
         HttpGet:
           Type: Api
