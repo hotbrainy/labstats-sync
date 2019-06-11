@@ -1,7 +1,7 @@
 {
-  "Camperdown": {
-    "Abercrombie Learning Hub": {
-      "East": {
+  "Camperdown / Darlington Campus": {
+    "H70 - Abercombie Business School (ABS)": {
+      "1230 - East Room": {
         "pc": [
           1265
         ],
@@ -9,7 +9,7 @@
           1264
         ]
       },
-      "North": {
+      "1220 - North Room": {
         "pc": [
           1262
         ],
@@ -17,7 +17,7 @@
           1263
         ]
       },
-      "South": {
+      "1010 - South Room": {
         "pc": [
           1260
         ],
@@ -26,7 +26,17 @@
         ]
       }
     },
-    "Fisher Library": {
+    "F07 - Carslaw Building East": {
+      "Level 2 - Carslaw Learning Hub": {
+        "pc": [
+          1256
+        ],
+        "pods": [
+          1257
+        ]
+      }
+    },
+    "F03 - Fisher Library": {
       "Level 2": {
         "pc": [
           1215,
@@ -49,8 +59,8 @@
         ]
       }
     },
-    "Brennan MacCallum": {
-      "Learning Hub": {
+    "A18 - Brennan MacCallum Building": {
+      "L2 - Learning Hub": {
         "pc": [
           1240
         ],
@@ -59,7 +69,7 @@
         ]
       }
     },
-    "Law Library": {
+    "F10 - Law Library": {
       "": {
         "pc": [
           1223,
@@ -71,7 +81,7 @@
         ]
       }
     },
-    "The Quarter": {
+    "A16 - The Quarter": {
       "": {
         "pc": [
           1203
@@ -81,16 +91,16 @@
         ]
       }
     },
-    "Bosch Commons": {
-      "": {
+    "D05 - Bosch Commons": {
+      "Level 3": {
         "pc": [
           1213,
           1214
         ]
       }
     },
-    "PNR Learning Hub": {
-      "": {
+    "J02 - PNR Learning Hub": {
+      "200": {
         "pc": [
           1267
         ],
@@ -99,26 +109,14 @@
         ]
       }
     },
-    "Nursing": {
-      "Access Lab": {
-        "pc": [
-          1269
-        ]
-      },
-      "Library": {
-        "pc": [
-          1200
-        ]
-      }
-    },
-    "Education Access Lab": {
-      "": {
+    "A35 - Education Building": {
+      "232 - Education Access Lab": {
         "pc": [
           1248
         ]
       }
     },
-    "SciTech Library": {
+    "G02 - SciTech Library": {
       "": {
         "pc": [
           1229,
@@ -132,26 +130,24 @@
       }
     }
   },
-  "Cumberland": {
-    "Library": {
-      "": {
+  "Cumberland Campus": {
+    "C43": {
+      "B Block  - Learning Hub": {
         "pc": [
           1211,
           1212
         ]
-      }
-    },
-    "Learning Hub": {
-      "": {
+      },
+      "R Block - Library": {
         "pc": [
           1253
         ]
       }
     }
   },
-  "Camden": {
-    "Library": {
-      "": {
+  "Camden Campus": {
+    "C15": {
+      "Library": {
         "pc": [
           1207
         ],
@@ -161,32 +157,49 @@
       }
     }
   },
-  "Surry Hills": {
-    "": {
-      "Sydney Dental Hospital Library": {
+  "Mallet Street Campus": {
+    "M02 Building A - Nursing Library": {
+      "L2": {
+        "pc": [
+          1200
+        ]
+      }
+    },
+    "M02 Building D - Nursing Access Lab": {
+      "D2-00": {
+        "pc": [
+          1269
+        ]
+      }
+    }
+  },
+  "Surry Hills Campus": {
+    "C12 - Sydney Dental Hospital Library": {
+      "Level 8": {
         "pc": [
           1205
         ]
       }
     }
   },
-  "Sydney Conservatorium of Music": {
-    "": {
-      "Conservatorium of Music Library": {
+  "Sydney Conservatorium of Music Campus": {
+    "C41": {
+      "Library": {
         "pc": [
           1210
         ]
       }
     }
   },
-  "Rozelle": {
-    "": {
-      "Sydney College of the Arts Library": {
+  "Rozelle Campus": {
+    "N01 - Sydney College of the Arts": {
+      "01 - Library": {
         "pc": [
           1236,
           1237
         ]
       }
     }
-  }
+  },
+  "Westmead Campus": {}
 }
