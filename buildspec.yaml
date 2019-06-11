@@ -6,4 +6,6 @@ phases:
             - pip install --user aws-sam-cli
             - USER_BASE_PATH=$(python -m site --user-base)
             - export PATH=$PATH:$USER_BASE_PATH/bin
+            - echo $CODEBUILD_SRC_DIR
+            - echo $PATH
             - sam build -b ./build -t ./template.yaml
