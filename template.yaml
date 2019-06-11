@@ -21,10 +21,10 @@ Parameters:
     Type: String
   Environment:
     Default: D
-    Description: "This is the environment (D, T or P)"
+    Description: "This is the environment (C, D, T or P)"
     Type: String
-    AllowedValues: [D,T,P]
-    ConstraintDescription: must specify D, T or P.
+    AllowedValues: [C,D,T,P]
+    ConstraintDescription: must specify C, D, T or P.
 Resources:
   ScheduledRule:
     Type: AWS::Events::Rule
@@ -100,7 +100,8 @@ Resources:
             - Sid: DynamoDBAccess
               Effect: Allow
               Action:
-                - 'dynamodb:*'
+                - 'dynamodb:Query'
+                - 'dynamodb:Scan'
               Resource: !Sub '${DynamoDBTable.Arn}'
       Events:
         HttpGet:
