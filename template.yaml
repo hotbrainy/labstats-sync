@@ -115,11 +115,18 @@ Resources:
                 - 'ssm:GetParametersByPath'
               Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
       Events:
-        HttpGet:
+        GetFunctionAPI:
           Type: Api
           Properties:
             Path: '/room-stations'
-            Method: get
+            Method: GET
+            RestApiId:
+              Ref: GetFunctionAPI
+  GetFunctionAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      EndpointConfiguration: PRIVATE
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -147,4 +154,14 @@ Outputs:
   SyncFunction:
     Description: "${SyncFunction} ARN"
     Value: !GetAtt SyncFunction.Arn
-      
+  GetFunction:
+    Description: "${GetFunction} ARN"
+    Value: !GetAtt GetFunction.Arn
+  GetFunctionAPIEndPoint:
+    Description: 'Room Stations API'
+    Value: !Sub '${GetFunctionAPI}.execute-api.${AWS::Region}.amazonaws.com'
+    Export:
+      Name: !Sub '${AWS::StackName}-GetFunctionAPIEndPoint'
+  DynamoDBTable:
+    Description: "${DynamoDBTable} ARN"
+    Value: !GetAtt DynamoDBTable.Arn
