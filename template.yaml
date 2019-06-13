@@ -25,6 +25,10 @@ Parameters:
     Type: String
     AllowedValues: [D,T,P]
     ConstraintDescription: must specify D, T or P.
+  LabStatsAPIKey:
+    Default: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
+    Description: "This is the LabStats API Key"
+    Type: String
 Resources:
   ScheduledRule:
     Type: AWS::Events::Rule
@@ -60,7 +64,7 @@ Resources:
       Timeout: 120
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          LABSTATS_API_KEY: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
+          LABSTATS_API_KEY: !Sub '${LabStatsAPIKey}'
           TABLE_NAME: !Ref DynamoDBTable
       Policies:
         - AWSLambdaExecute # Managed Policy
