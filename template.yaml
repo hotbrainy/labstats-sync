@@ -27,13 +27,15 @@ Parameters:
     Default: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
     Description: "This is the LabStats API Key"
     Type: String
+Conditions:
+  IsProd: !Equals [!Ref Environment, P]
 Resources:
   ScheduledRule:
     Type: AWS::Events::Rule
     Properties:
       Description: "ScheduledRule"
       # Schedule rule in UTC.
-      ScheduleExpression: "rate(1 minute)"
+      ScheduleExpression: !If [IsProd, "rate(1 minute)", "cron(0 2 ? * MON-FRI *)"]
       State: "ENABLED"
       Targets:
         - Arn: !GetAtt SyncFunction.Arn
@@ -134,6 +136,58 @@ Resources:
           Value: !Ref Application
         - Key: Program
           Value: Shared
+  DynamoDBScalingRole:
+    Type: "AWS::IAM::Role"
+    Condition: "IsProd"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "application-autoscaling.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:UpdateTable"
+                  - "cloudwatch:PutMetricAlarm"
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:GetMetricStatistics"
+                  - "cloudwatch:SetAlarmState"
+                  - "cloudwatch:DeleteAlarms"
+                Resource: "*"
+  DynamoDBWriteCapacityScalableTarget:
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Condition: "IsProd"
+    Properties:
+      MaxCapacity: 50
+      MinCapacity: 1
+      ResourceId: !Sub "table/${DynamoDBTable}"
+      RoleARN: !GetAtt DynamoDBScalingRole.Arn
+      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
+      ServiceNamespace: dynamodb
+  DynamoDBWriteScalingPolicy:
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Condition: "IsProd"
+    Properties:
+      PolicyName: WriteAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref DynamoDBWriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
 Outputs:
   SyncFunction:
     Description: "SyncFunction ARN"
