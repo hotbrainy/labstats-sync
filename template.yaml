@@ -10,17 +10,15 @@ Globals:
 Parameters:
   Application:
     Default: lbst
-    Description: "The Application name, generally the Application Context from the SDDC. "
+    Description: "The Application name, generally the Application Context from the SDDC."
     Type: String
     MaxLength: 4
     MinLength: 4
-  Lifecycle:
-    Description: "This is the application Lifecycle for tagging, between Development, Test and Production, by default is Development"
-    Default: Development
-    AllowedValues: [Development,Test,Production]
+  Program:
+    Default: Shared
     Type: String
   Environment:
-    Default: D
+    Default: C
     Description: "This is the environment (C, D, T or P)"
     Type: String
     AllowedValues: [C,D,T,P]
@@ -56,7 +54,8 @@ Resources:
     Properties:
       Tags:
         Application: !Ref Application
-        Program: "Shared"
+        Program: !Ref Program
+        Environment: !Ref Environment
       CodeUri: FunctionSource
       Handler: edu.sydneyuni.myuni.LabStatsSync
       Runtime: java8
@@ -80,7 +79,8 @@ Resources:
     Properties:
       Tags:
         Application: !Ref Application
-        Program: "Shared"
+        Program: !Ref Program
+        Environment: !Ref Environment
       CodeUri: FunctionSource
       Handler: edu.sydneyuni.myuni.RoomStationsQuery
       Runtime: java8
