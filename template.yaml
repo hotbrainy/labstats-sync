@@ -47,10 +47,7 @@ Resources:
         Ref: "SyncFunction"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
-      SourceArn:
-        Fn::GetAtt:
-          - "ScheduledRule"
-          - "Arn"
+      SourceArn: !GetAtt ScheduledRule.Arn
   SyncFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -65,7 +62,7 @@ Resources:
       Timeout: 120
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          LABSTATS_API_KEY: !Sub '${LabStatsAPIKey}'
+          LABSTATS_API_KEY: !Ref LabStatsAPIKey
           TABLE_NAME: !Ref DynamoDBTable
       Policies:
         - AWSLambdaExecute # Managed Policy
@@ -75,7 +72,7 @@ Resources:
               Effect: Allow
               Action:
                 - 'dynamodb:PutItem'
-              Resource: !Sub '${DynamoDBTable.Arn}'
+              Resource: !GetAtt DynamoDBTable.Arn
   GetFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -99,7 +96,7 @@ Resources:
               Effect: Allow
               Action:
                 - 'dynamodb:Query'
-              Resource: !Sub '${DynamoDBTable.Arn}'
+              Resource: !GetAtt DynamoDBTable.Arn
       Events:
         HttpGet:
           Type: Api
