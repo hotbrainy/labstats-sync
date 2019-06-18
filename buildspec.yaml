@@ -9,4 +9,7 @@ phases:
             - export PATH=$PATH:$USER_BASE_PATH/bin
             - echo $CODEBUILD_SRC_DIR
             - echo $PATH
+            - export codebucket="cf-templates-1lxj6j7uerr2-ap-southeast-2"
             - sam build -b ./build -t ./template.yaml
+            - sam package --template-file build/template.yaml --output-template-file packaged.yaml --s3-bucket $codebucket
+            - sam deploy --template-file packaged.yaml --parameter-overrides Lifecycle=Development Environment=D Application=lbst --capabilities CAPABILITY_IAM --stack-name lbstSyncFunc
