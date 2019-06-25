@@ -121,15 +121,10 @@ Resources:
         schemes:
           - https
         paths:
-          /:
+          /room-stations:
             get:
               produces:
                 - 'application/json'
-              parameters:
-                - name: 'sid'
-                  in: 'header'
-                  required: false
-                  type: 'string'
               responses:
                 '200':
                   description: '200 response'
