@@ -117,7 +117,7 @@ Resources:
         swagger: '2.0'
         info:
           version: '0.1'
-          title: !Sub ${ApplicationName}-get-ical-link
+          title: !Sub ${Application}-getlabstats
         schemes:
           - https
         paths:
