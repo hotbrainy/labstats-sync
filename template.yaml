@@ -55,7 +55,7 @@ Resources:
         Application: !Ref Application
         Program: !Ref Program
         Environment: !Ref Environment
-      CodeUri: FunctionSource
+      CodeUri: ./
       Handler: edu.sydneyuni.myuni.LabStatsSync
       Runtime: java8
       MemorySize: 170
@@ -80,7 +80,7 @@ Resources:
         Application: !Ref Application
         Program: !Ref Program
         Environment: !Ref Environment
-      CodeUri: FunctionSource
+      CodeUri: ./
       Handler: edu.sydneyuni.myuni.RoomStationsQuery
       Runtime: java8
       MemorySize: 170
@@ -114,14 +114,14 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: K
+        - AttributeName: Id
           AttributeType: N
-        - AttributeName: R
+        - AttributeName: SyncDate
           AttributeType: S
       KeySchema:
-        - AttributeName: K
+        - AttributeName: Id
           KeyType: HASH
-        - AttributeName: R
+        - AttributeName: SyncDate
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 1
@@ -135,7 +135,6 @@ Resources:
           Value: Shared
   DynamoDBScalingRole:
     Type: "AWS::IAM::Role"
-    Condition: "IsProd"
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -162,29 +161,27 @@ Resources:
                   - "cloudwatch:SetAlarmState"
                   - "cloudwatch:DeleteAlarms"
                 Resource: "*"
-  DynamoDBWriteCapacityScalableTarget:
+  DynamoDBReadCapacityScalableTarget:
     Type: "AWS::ApplicationAutoScaling::ScalableTarget"
-    Condition: "IsProd"
     Properties:
       MaxCapacity: 50
       MinCapacity: 1
       ResourceId: !Sub "table/${DynamoDBTable}"
       RoleARN: !GetAtt DynamoDBScalingRole.Arn
-      ScalableDimension: "dynamodb:table:WriteCapacityUnits"
+      ScalableDimension: "dynamodb:table:ReadCapacityUnits"
       ServiceNamespace: dynamodb
-  DynamoDBWriteScalingPolicy:
+  DynamoDBReadScalingPolicy:
     Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
-    Condition: "IsProd"
     Properties:
-      PolicyName: WriteAutoScalingPolicy
+      PolicyName: ReadAutoScalingPolicy
       PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref DynamoDBWriteCapacityScalableTarget
+      ScalingTargetId: !Ref DynamoDBReadCapacityScalableTarget
       TargetTrackingScalingPolicyConfiguration:
         TargetValue: 70
         ScaleInCooldown: 60
         ScaleOutCooldown: 60
         PredefinedMetricSpecification:
-          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
 Outputs:
   SyncFunction:
     Description: "SyncFunction ARN"
