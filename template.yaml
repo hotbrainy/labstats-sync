@@ -5,8 +5,18 @@ Description: >
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
+  Api:
+    Cors: "'*'"
+    EndpointConfiguration: REGIONAL
   Function:
-    Timeout: 300
+    Tags:
+      Application: !Ref Application
+      Program: !Ref Program
+      Environment: !Ref Environment
+    CodeUri: ./
+    Runtime: java8
+    MemorySize: 170
+    Timeout: 120
 Parameters:
   Application:
     Default: lbst
@@ -51,15 +61,7 @@ Resources:
   SyncFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      Tags:
-        Application: !Ref Application
-        Program: !Ref Program
-        Environment: !Ref Environment
-      CodeUri: ./
       Handler: edu.sydneyuni.myuni.LabStatsSync
-      Runtime: java8
-      MemorySize: 170
-      Timeout: 120
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           LABSTATS_API_KEY: !Ref LabStatsAPIKey
@@ -76,15 +78,7 @@ Resources:
   GetFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      Tags:
-        Application: !Ref Application
-        Program: !Ref Program
-        Environment: !Ref Environment
-      CodeUri: ./
       Handler: edu.sydneyuni.myuni.RoomStationsQuery
-      Runtime: java8
-      MemorySize: 170
-      Timeout: 120
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           TABLE_NAME: !Ref DynamoDBTable
@@ -103,13 +97,6 @@ Resources:
           Properties:
             Path: '/room-stations'
             Method: GET
-            RestApiId:
-              Ref: GetFunctionApi
-  GetFunctionApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      StageName: !Ref Environment
-      EndpointConfiguration: REGIONAL
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -132,9 +119,10 @@ Resources:
         - Key: Application
           Value: !Ref Application
         - Key: Program
-          Value: Shared
+          Value: !Ref Program
   DynamoDBScalingRole:
     Type: "AWS::IAM::Role"
+    Condition: "IsProd"
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -163,6 +151,7 @@ Resources:
                 Resource: "*"
   DynamoDBReadCapacityScalableTarget:
     Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Condition: "IsProd"
     Properties:
       MaxCapacity: 50
       MinCapacity: 1
@@ -172,6 +161,7 @@ Resources:
       ServiceNamespace: dynamodb
   DynamoDBReadScalingPolicy:
     Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Condition: "IsProd"
     Properties:
       PolicyName: ReadAutoScalingPolicy
       PolicyType: TargetTrackingScaling
@@ -191,7 +181,7 @@ Outputs:
     Value: !GetAtt GetFunction.Arn
   GetFunctionApiEndPoint:
     Description: 'Room Stations API Endpoint'
-    Value: !Sub '${GetFunctionApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Value: !Sub '${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com'
     Export:
       Name: !Sub '${AWS::StackName}-GetFunctionApiEndPoint'
   DynamoDBTable:
