@@ -5,9 +5,6 @@ Description: >
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
-  Api:
-    Cors: "'*'"
-    EndpointConfiguration: REGIONAL
   Function:
     Tags:
       Application: !Ref Application
@@ -97,6 +94,13 @@ Resources:
           Properties:
             Path: '/room-stations'
             Method: GET
+            RestApiId: !Ref GetFunctionApi
+  GetFunctionApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Cors: "'*'"
+      StageName: !Ref Environment
+      EndpointConfiguration: REGIONAL
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -181,7 +185,7 @@ Outputs:
     Value: !GetAtt GetFunction.Arn
   GetFunctionApiEndPoint:
     Description: 'Room Stations API Endpoint'
-    Value: !Sub '${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Value: !Sub '${GetFunctionApi}.execute-api.${AWS::Region}.amazonaws.com'
     Export:
       Name: !Sub '${AWS::StackName}-GetFunctionApiEndPoint'
   DynamoDBTable:
