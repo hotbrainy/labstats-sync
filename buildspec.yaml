@@ -4,13 +4,12 @@ phases:
     build:
         commands:
             - echo "starting building the packages"
-            # Comment to trigger 
+            # Comment to trigger some more
             - pip install --user aws-sam-cli
             - USER_BASE_PATH=$(python -m site --user-base)
             - export PATH=$PATH:$USER_BASE_PATH/bin
-            - echo $CODEBUILD_SRC_DIR
-            - echo $PATH
-            - export codebucket="cf-templates-1lxj6j7uerr2-ap-southeast-2"
+            - echo ${BranchName}
+            - echo $CODEBUILD_SOURCE_VERSION
             - sam build -b ./build -t ./template.yaml
             - sam package --template-file build/template.yaml --output-template-file packaged.yaml --s3-bucket $codebucket
-            - sam deploy --template-file packaged.yaml --parameter-overrides Lifecycle=Development Environment=D Application=lbst --capabilities CAPABILITY_IAM --stack-name lbstSyncFunc
+            - sam deploy --template-file packaged.yaml --parameter-overrides Lifecycle=Development Environment=D Application=lbst --capabilities CAPABILITY_IAM --stack-name lbst${BranchName}

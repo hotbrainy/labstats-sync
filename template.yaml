@@ -163,7 +163,7 @@ Resources:
             - Effect: 'Allow'
               Principal: '*'
               Action: 'execute-api:Invoke'
-              Resource: '*' 
+              Resource: 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GetFunctionApi}/*'
               #arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GetIcalLinkApi}/*'
   GetFunctionApiKey: 
     Type: AWS::ApiGateway::ApiKey

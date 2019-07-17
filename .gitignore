@@ -46,3 +46,4 @@ target/
 
 .localstack
 .aws-sam
+packaged.yaml
