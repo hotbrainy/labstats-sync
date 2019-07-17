@@ -72,7 +72,7 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH
             - Type: HEAD_REF
-              Pattern: ^refs/heads/${BranchName}
+              Pattern: !Sub ^refs/heads/${BranchName}$
 Outputs:
   ProjectName:
     Description: 'CodeBuild Project Name (used in other project)'
