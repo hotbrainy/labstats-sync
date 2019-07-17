@@ -4,7 +4,7 @@ phases:
     build:
         commands:
             - echo "starting building the packages"
-            # Comment to trigger
+            # Comment to trigger something
             - pip install --user aws-sam-cli
             - USER_BASE_PATH=$(python -m site --user-base)
             - export PATH=$PATH:$USER_BASE_PATH/bin
