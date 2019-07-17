@@ -61,7 +61,7 @@ Resources:
           Value: !Ref ArtifactsBucket
       Name: !Sub '${AWS::StackName}-app'
       ServiceRole: !GetAtt 'CodeBuildRole.Arn'
-      SourceVersion: !Ref BranchName
+      SourceVersion: !Sub BranchName'*'
       Source:
         Type: BITBUCKET
         Location: !Sub https://bitbucket.org/sydneyuni/${RepositoryName}
@@ -72,7 +72,7 @@ Resources:
           - - Type: EVENT
               Pattern: PUSH
             - Type: HEAD_REF
-              Pattern: !Sub ^refs/heads/${BranchName}$
+              Pattern: !Sub ^refs/heads/${BranchName}*$
 Outputs:
   ProjectName:
     Description: 'CodeBuild Project Name (used in other project)'
