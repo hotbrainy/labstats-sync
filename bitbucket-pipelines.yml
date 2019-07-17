@@ -17,4 +17,4 @@ pipelines:
           - export AWS_SECRET_ACCESS_KEY=$CODERS_AWS_SECRET_ACCESS_KEY
           - sam build -b ./build -t ./template.yaml
           - sam package --template-file build/template.yaml --output-template-file packaged.yaml --s3-bucket $CODERS_AWS_BUCKET
-          - sam deploy --template-file packaged.yaml --parameter-overrides ParentVPCStack=ictcodersawsvpc Lifecycle=Development Environment=D Application=lbst --capabilities CAPABILITY_IAM --stack-name LabStatSync
+          - sam deploy --template-file packaged.yaml --parameter-overrides ParentVPCStack=ictcodersawsvpc Lifecycle=Development Environment=C Application=lbst --capabilities CAPABILITY_IAM --stack-name lbst
