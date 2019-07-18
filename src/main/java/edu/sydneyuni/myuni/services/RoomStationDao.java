@@ -20,9 +20,9 @@ public class RoomStationDao implements Dao<RoomStation[]> {
 
     private final AmazonDynamoDB dynamoDB;
     private final String tableName;
-    static final String HASH = "K";
-    static final String RANGE = "R";
-    private static final String VALUE = "V";
+    static final String HASH = "Id";
+    static final String RANGE = "SyncDate";
+    private static final String VALUE = "JSON";
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd/HH-mm");
     private final ObjectWriter writer = new ObjectMapper().writerFor(RoomStation[].class);
     private final ObjectReader reader = new ObjectMapper().readerFor(RoomStation[].class);

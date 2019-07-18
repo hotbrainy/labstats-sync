@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/FunctionSource/findapc.iml" filepath="$PROJECT_DIR$/FunctionSource/findapc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/findapc.iml" filepath="$PROJECT_DIR$/findapc.iml" />
     </modules>
   </component>
 </project>

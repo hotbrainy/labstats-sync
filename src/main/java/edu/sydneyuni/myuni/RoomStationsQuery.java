@@ -32,10 +32,11 @@ public class RoomStationsQuery implements RequestStreamHandler {
     }
 
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, String> responseHeaders = new HashMap<>(2);
+        responseHeaders.put("Access-Control-Allow-Origin", "*");
         try {
             RoomStation[] roomStations = getDao().getLatestRoomStations();
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, String> responseHeaders = new HashMap<>(1);
             responseHeaders.put(HttpHeaders.CONTENT_TYPE, "application/json");
             mapper.writeValue(outputStream,
                     new ApiGatewayProxyResponse.ApiGatewayProxyResponseBuilder()
@@ -46,6 +47,11 @@ public class RoomStationsQuery implements RequestStreamHandler {
             );
         } catch (Exception e) {
             logger.error("Error getting RoomStations from DynamoDB", e);
+            mapper.writeValue(outputStream,
+                    new ApiGatewayProxyResponse.ApiGatewayProxyResponseBuilder()
+                            .withStatusCode(500)
+                            .withHeaders(responseHeaders)
+                            .build());
         }
     }
 

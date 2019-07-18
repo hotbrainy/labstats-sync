@@ -1,7 +1,5 @@
 package edu.sydneyuni.myuni.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import java.io.IOException;
 
 public interface Dao<T> {

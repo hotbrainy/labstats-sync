@@ -6,7 +6,14 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 300
+    Tags:
+      Application: !Ref Application
+      Program: !Ref Program
+      Environment: !Ref Environment
+    CodeUri: ./
+    Runtime: java8
+    MemorySize: 170
+    Timeout: 120
 Parameters:
   ParentVPCStack:
     Description: 'Stack name of the parent VPC stack template.'
@@ -14,28 +21,32 @@ Parameters:
     Type: String
   Application:
     Default: lbst
-    Description: "The Application name, generally the Application Context from the SDDC. "
+    Description: "The Application name, generally the Application Context from the SDDC."
     Type: String
     MaxLength: 4
     MinLength: 4
-  Lifecycle:
-    Description: "This is the application Lifecycle for tagging, between Development, Test and Production, by default is Development"
-    Default: Development
-    AllowedValues: [Development,Test,Production]
+  Program:
+    Default: Shared
     Type: String
   Environment:
-    Default: D
+    Default: C
     Description: "This is the environment (C, D, T or P)"
     Type: String
     AllowedValues: [C,D,T,P]
     ConstraintDescription: must specify C, D, T or P.
+  LabStatsAPIKey:
+    Default: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
+    Description: "This is the LabStats API Key"
+    Type: String
+Conditions:
+  IsProd: !Equals [!Ref Environment, P]
 Resources:
   ScheduledRule:
     Type: AWS::Events::Rule
     Properties:
       Description: "ScheduledRule"
       # Schedule rule in UTC.
-      ScheduleExpression: "rate(1 minute)"
+      ScheduleExpression: !If [IsProd, "rate(1 minute)", "cron(0 2 ? * MON-FRI *)"]
       State: "ENABLED"
       Targets:
         - Arn: !GetAtt SyncFunction.Arn
@@ -47,24 +58,14 @@ Resources:
         Ref: "SyncFunction"
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
-      SourceArn:
-        Fn::GetAtt:
-          - "ScheduledRule"
-          - "Arn"
+      SourceArn: !GetAtt ScheduledRule.Arn
   SyncFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      Tags:
-        Application: !Ref Application
-        Program: "Shared"
-      CodeUri: FunctionSource
       Handler: edu.sydneyuni.myuni.LabStatsSync
-      Runtime: java8
-      MemorySize: 170
-      Timeout: 120
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          LABSTATS_API_KEY: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
+          LABSTATS_API_KEY: !Ref LabStatsAPIKey
           TABLE_NAME: !Ref DynamoDBTable
       Policies:
         - AWSLambdaExecute # Managed Policy
@@ -74,26 +75,11 @@ Resources:
               Effect: Allow
               Action:
                 - 'dynamodb:PutItem'
-              Resource: !Sub '${DynamoDBTable.Arn}'
-        - Version: '2012-10-17' # Policy Document
-          Statement:
-            - Sid: ReadSSMParameters
-              Effect: Allow
-              Action:
-                - 'ssm:GetParameters'
-                - 'ssm:GetParametersByPath'
-              Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${Application}/${Environment}*'
+              Resource: !GetAtt DynamoDBTable.Arn
   GetFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      Tags:
-        Application: !Ref Application
-        Program: "Shared"
-      CodeUri: FunctionSource
       Handler: edu.sydneyuni.myuni.RoomStationsQuery
-      Runtime: java8
-      MemorySize: 170
-      Timeout: 120
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           TABLE_NAME: !Ref DynamoDBTable
@@ -105,16 +91,17 @@ Resources:
               Effect: Allow
               Action:
                 - 'dynamodb:Query'
-              Resource: !Sub '${DynamoDBTable.Arn}'
+              Resource: !GetAtt DynamoDBTable.Arn
       Events:
         HttpGet:
           Type: Api
           Properties:
             Path: '/room-stations'
-            Method: get
+            Method: GET
   GetFunctionApi:
     Type: AWS::Serverless::Api
     Properties:
+      Cors: "'*'"
       StageName: !Ref Environment
       EndpointConfiguration: PRIVATE
       DefinitionBody:
@@ -187,22 +174,22 @@ Resources:
     Properties : 
       KeyId: !Ref GetFunctionApiKey
       KeyType: API_KEY
-      UsagePlanId: !Ref GetFunctionUsagePlan 
+      UsagePlanId: !Ref GetFunctionUsagePlan
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: K
+        - AttributeName: Id
           AttributeType: N
-        - AttributeName: R
+        - AttributeName: SyncDate
           AttributeType: S
       KeySchema:
-        - AttributeName: K
+        - AttributeName: Id
           KeyType: HASH
-        - AttributeName: R
+        - AttributeName: SyncDate
           KeyType: RANGE
       ProvisionedThroughput:
-        ReadCapacityUnits: 5
+        ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       SSESpecification:
         SSEEnabled: true
@@ -210,9 +197,71 @@ Resources:
         - Key: Application
           Value: !Ref Application
         - Key: Program
-          Value: Shared
+          Value: !Ref Program
+  DynamoDBScalingRole:
+    Type: "AWS::IAM::Role"
+    Condition: "IsProd"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "application-autoscaling.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:UpdateTable"
+                  - "cloudwatch:PutMetricAlarm"
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:GetMetricStatistics"
+                  - "cloudwatch:SetAlarmState"
+                  - "cloudwatch:DeleteAlarms"
+                Resource: "*"
+  DynamoDBReadCapacityScalableTarget:
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Condition: "IsProd"
+    Properties:
+      MaxCapacity: 50
+      MinCapacity: 1
+      ResourceId: !Sub "table/${DynamoDBTable}"
+      RoleARN: !GetAtt DynamoDBScalingRole.Arn
+      ScalableDimension: "dynamodb:table:ReadCapacityUnits"
+      ServiceNamespace: dynamodb
+  DynamoDBReadScalingPolicy:
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Condition: "IsProd"
+    Properties:
+      PolicyName: ReadAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref DynamoDBReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
 Outputs:
   SyncFunction:
-    Description: "${SyncFunction} ARN"
+    Description: "SyncFunction ARN"
     Value: !GetAtt SyncFunction.Arn
-      
+  GetFunction:
+    Description: "GetFunction ARN"
+    Value: !GetAtt GetFunction.Arn
+  GetFunctionApiEndPoint:
+    Description: 'Room Stations API Endpoint'
+    Value: !Sub '${GetFunctionApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Export:
+      Name: !Sub '${AWS::StackName}-GetFunctionApiEndPoint'
+  DynamoDBTable:
+    Description: "DynamoDB ARN"
+    Value: !GetAtt DynamoDBTable.Arn

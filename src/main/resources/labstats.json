@@ -26,7 +26,7 @@
         ]
       }
     },
-    "F07 - Carslaw Building East": {
+    "F07 - Carslaw Building": {
       "Level 2 - Carslaw Learning Hub": {
         "pc": [
           1256
@@ -50,6 +50,9 @@
         "pc": [
           1217,
           1221
+        ],
+        "pods": [
+          1222
         ]
       },
       "Level 4": {

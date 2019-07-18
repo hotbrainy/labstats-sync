@@ -6,25 +6,14 @@ import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.sydneyuni.myuni.models.RoomStation;
 import edu.sydneyuni.myuni.models.USydCampuses;
-import edu.sydneyuni.myuni.models.labstats.GroupStatusResponse;
 import edu.sydneyuni.myuni.services.LabStatsClient;
 import edu.sydneyuni.myuni.services.RoomStationDao;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 public class LabStatsSync implements RequestStreamHandler {
 
