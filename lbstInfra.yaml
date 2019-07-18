@@ -11,6 +11,12 @@ Parameters:
   ParentVPCStack:
     Description: 'Stack name of parent VPC stack based on vpc/vpc-*azs.yaml template.'
     Type: String
+  Application:
+    Default: lbst
+    Description: "The Application name, generally the Application Context from the SDDC. "
+    Type: String
+    MaxLength: 4
+    MinLength: 4
 Resources:
   ArtifactsBucket:
     DependsOn: CloudFormationRole # make sure that CloudFormationRole is deleted last
@@ -54,7 +60,7 @@ Resources:
         Type: S3
         Location: !Ref ArtifactsBucket
       Environment:
-        ComputeType: 'BUILD_GENERAL1_SMALL'
+        ComputeType: 'BUILD_GENERAL1_MEDIUM'
         Image: 'aws/codebuild/standard:1.0'
         Type: 'LINUX_CONTAINER'
         EnvironmentVariables:
