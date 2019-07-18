@@ -17,6 +17,12 @@ Parameters:
     Type: String
     MaxLength: 4
     MinLength: 4
+  Environment:
+    Default: D
+    Description: "This is the environment (C, D, T or P)"
+    Type: String
+    AllowedValues: [C,D,T,P]
+    ConstraintDescription: must specify C, D, T or P.
 Resources:
   ArtifactsBucket:
     DependsOn: CloudFormationRole # make sure that CloudFormationRole is deleted last
@@ -70,6 +76,8 @@ Resources:
           Value: !Ref ArtifactsBucket
         - Name: ParentVPCStack
           Value: !Ref ParentVPCStack
+        - Name: stackEnvVar
+          Value: !Ref Environment
       Name: !Sub '${AWS::StackName}-app'
       ServiceRole: !GetAtt 'CodeBuildRole.Arn'
       SourceVersion: !Sub BranchName'*'

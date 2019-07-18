@@ -1,6 +1,6 @@
 pipelines:
   branches:
-    develop:
+    feature/*:        
       - step:
           name: Test
           image: maven:3.3.9
