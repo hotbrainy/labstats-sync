@@ -8,8 +8,11 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.model.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.sydneyuni.myuni.models.RoomStation;
 import edu.sydneyuni.myuni.models.RoomStationTest;
+import edu.sydneyuni.myuni.models.USydCampuses;
+import edu.sydneyuni.myuni.models.USydCampusesTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -66,5 +69,14 @@ public class RoomStationDaoTest {
         RoomStation[] arr = RoomStationTest.generateArray();
         dao.insert(arr);
         assertArrayEquals(arr, dao.getLatestRoomStations());
+    }
+
+    @Test
+    @Disabled
+    void manualSync() throws IOException {
+        USydCampuses config = new ObjectMapper().readValue(getClass().getClassLoader().getResourceAsStream("labstats.json"), USydCampuses.class);
+        RoomStation[] roomStations =  new LabStatsClient(System.getenv("LABSTATS_API_KEY")).getLabStatsRoomStations(USydCampusesTest.generate());
+        RoomStationDao dao = new RoomStationDao(AmazonDynamoDBClientBuilder.defaultClient(), "lbst-DynamoDBTable-PBWCCXHMHGGE");
+        dao.insert(roomStations);
     }
 }
