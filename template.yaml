@@ -51,11 +51,6 @@ Resources:
       Targets:
         - Arn: !GetAtt SyncFunction.Arn
           Id: "SyncFunction"
-      Tags:
-        - Key: Application
-          Value: !Ref Application
-        - Key: Program
-          Value: !Ref Program
   PermissionForEventsToInvokeLambda:
     Type: AWS::Lambda::Permission
     Properties:
