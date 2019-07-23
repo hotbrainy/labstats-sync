@@ -61,6 +61,11 @@ Resources:
     DependsOn: CloudFormationRole # make sure that CloudFormationRole is deleted last
     Type: 'AWS::CodeBuild::Project'
     Properties:
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: Program
+          Value: !Ref Program
       BadgeEnabled: true
       Artifacts:
         Type: S3

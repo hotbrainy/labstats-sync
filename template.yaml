@@ -51,6 +51,11 @@ Resources:
       Targets:
         - Arn: !GetAtt SyncFunction.Arn
           Id: "SyncFunction"
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: Program
+          Value: !Ref Program
   PermissionForEventsToInvokeLambda:
     Type: AWS::Lambda::Permission
     Properties:
@@ -76,6 +81,11 @@ Resources:
               Action:
                 - 'dynamodb:PutItem'
               Resource: !GetAtt DynamoDBTable.Arn
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: Program
+          Value: !Ref Program
   GetFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -99,12 +109,22 @@ Resources:
             Path: '/room-stations'
             Method: GET
             RestApiId: !Ref GetFunctionApi
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: Program
+          Value: !Ref Program
   GetFunctionApi:
     Type: AWS::Serverless::Api
     Properties:
       Cors: "'*'"
       StageName: !Ref Environment
       EndpointConfiguration: REGIONAL
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: Program
+          Value: !Ref Program
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
