@@ -120,11 +120,6 @@ Resources:
       Cors: "'*'"
       StageName: !Ref Environment
       EndpointConfiguration: REGIONAL
-      Tags:
-        - Key: Application
-          Value: !Ref Application
-        - Key: Program
-          Value: !Ref Program
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
