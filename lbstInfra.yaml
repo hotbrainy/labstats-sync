@@ -61,12 +61,15 @@ Resources:
     DependsOn: CloudFormationRole # make sure that CloudFormationRole is deleted last
     Type: 'AWS::CodeBuild::Project'
     Properties:
+      Tags:
+        - Key: Application
+          Value: !Ref Application
       BadgeEnabled: true
       Artifacts:
         Type: S3
         Location: !Ref ArtifactsBucket
       Environment:
-        ComputeType: 'BUILD_GENERAL1_MEDIUM'
+        ComputeType: 'BUILD_GENERAL1_SMALL'
         Image: 'aws/codebuild/standard:1.0'
         Type: 'LINUX_CONTAINER'
         EnvironmentVariables:
