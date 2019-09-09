@@ -1,11 +1,14 @@
 package edu.sydneyuni.myuni;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import edu.sydneyuni.myuni.models.RoomStation;
 import edu.sydneyuni.myuni.models.RoomStationTest;
 import edu.sydneyuni.myuni.services.LabStatsClient;
 import edu.sydneyuni.myuni.services.RoomStationDao;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.commons.util.StringUtils;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -33,5 +36,17 @@ public class LabStatsSyncTest {
         lambda.handleRequest(null, null, null);
         verify(labStatsClientMock, times(1)).getLabStatsRoomStations(lambda.getUSydCampuses());
         verify(daoMock, times(1)).insert(arr);
+    }
+
+    @Disabled
+    @Test
+    void testManual() {
+        String tableName = "lbst-DynamoDBTable-PBWCCXHMHGGE";
+        String labStatsAPIKey = System.getenv("LABSTATS_API_KEY");
+        if (StringUtils.isBlank(labStatsAPIKey)) {
+            return;
+        }
+        LabStatsSync sync = new LabStatsSync(new RoomStationDao(AmazonDynamoDBClientBuilder.defaultClient(), tableName), new LabStatsClient(labStatsAPIKey));
+        sync.handleRequest(null, null, null);
     }
 }

@@ -51,6 +51,17 @@ Resources:
       Targets:
         - Arn: !GetAtt SyncFunction.Arn
           Id: "SyncFunction"
+  ScheduledRuleGetWarm:
+    Type: AWS::Events::Rule
+    Condition: "IsProd"
+    Properties:
+      Description: "ScheduledRule"
+      # Schedule rule in UTC.
+      ScheduleExpression: "rate(15 minutes)"
+      State: "ENABLED"
+      Targets:
+        - Arn: !GetAtt GetFunction.Arn
+          Id: "GetFunction"
   PermissionForEventsToInvokeLambda:
     Type: AWS::Lambda::Permission
     Properties:
