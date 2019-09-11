@@ -44,7 +44,7 @@ Resources:
   ScheduledRule:
     Type: AWS::Events::Rule
     Properties:
-      Description: "ScheduledRule"
+      Description: "Scheduled Rule to Sync the data"
       # Schedule rule in UTC.
       ScheduleExpression: !If [IsProd, "rate(1 minute)", "cron(0 2 ? * MON-FRI *)"]
       State: "ENABLED"
@@ -53,16 +53,16 @@ Resources:
           Id: "SyncFunction"
   ScheduledRuleGetWarm:
     Type: AWS::Events::Rule
-    Condition: "IsProd"
+    #Condition: "IsProd"
     Properties:
-      Description: "ScheduledRule"
+      Description: "Scheduled Rule to keep GetFunction Warm"
       # Schedule rule in UTC.
-      ScheduleExpression: "rate(15 minutes)"
+      ScheduleExpression: "rate(10 minutes)"
       State: "ENABLED"
       Targets:
         - Arn: !GetAtt GetFunction.Arn
           Id: "GetFunction"
-  PermissionForEventsToInvokeLambda:
+  PermissionForEventsToInvokeSyncLambda:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName:
@@ -70,6 +70,14 @@ Resources:
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
       SourceArn: !GetAtt ScheduledRule.Arn
+  PermissionForEventsToInvokeGetLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: "GetFunction"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt ScheduledRuleGetWarm.Arn
   SyncFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
