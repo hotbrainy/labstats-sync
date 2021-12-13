@@ -1,0 +1,13 @@
+{
+    "Parameters" : {
+        "ParentVPCStack": "ictcodersawsvpc",
+        "Application": "lbst",
+        "Program": "ICT",
+        "FacultyName": "ICT",
+        "Lifecycle": "Development",
+        "SupportLevel": "Platinum",
+        "Environment": "C",
+        "RepositoryName": "labstats-sync",
+        "BranchName": "coders"
+    }
+}

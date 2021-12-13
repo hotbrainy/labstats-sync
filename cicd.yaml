@@ -1,0 +1,521 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AWS Serverless Labstats API and Sync deployed via SAM, Serverless Application Model.
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Tags:
+      Application: !Ref Application
+      Program: !Ref Program
+      Environment: !Ref Environment
+    CodeUri: ./
+    Runtime: java8
+    MemorySize: 256
+    Timeout: 120
+Parameters:
+  ParentVPCStack:
+    Description: 'Stack name of the parent VPC stack template.'
+    Default: ictdevawsvpc
+    Type: String
+  Application:
+    Default: lbst
+    Description: "The Application name, generally the Application Context from the SDDC."
+    Type: String
+    MaxLength: 4
+    MinLength: 4
+  Program:
+    Default: Shared
+    Type: String
+  Environment:
+    Default: C
+    Description: "This is the environment (C, D, T or P)"
+    Type: String
+    AllowedValues: [C,D,T,P]
+    ConstraintDescription: must specify C, D, T or P.
+  RepositoryName:
+    Description: "The version control repository name. E.g. Git Repo"
+    Type: String
+    Default: ""
+  BranchName:
+    Description: "The version control repository branch name. E.g. master, uat, develop or coders branch"
+    Type: String
+    Default: "coders"
+  FacultyName:
+    Type: String
+    Default: Library
+  SupportLevel:
+    Type: String
+    Default: Gold
+  Lifecycle:
+    Description: "This is the application Lifecycle for tagging, between Development, Test, Staging and Production, by default is Development"
+    Default: Development
+    Type: String
+  LabStatsAPIKey:
+    Default: "c120c47a-63cc-402c-9491-8fba2f66aa1f"
+    Description: "This is the LabStats API Key"
+    Type: String
+Conditions:
+  IsProd: !Equals [!Ref Environment, P]
+Resources:
+  ScheduledRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Scheduled Rule to Sync the data"
+      # Schedule rule in UTC.
+      ScheduleExpression: !If [IsProd, "rate(1 minute)", "cron(0 2 ? * MON-FRI *)"]
+      State: "ENABLED"
+      Targets:
+        - Arn: !GetAtt SyncFunction.Arn
+          Id: "SyncFunction"
+  ScheduledRuleGetWarm:
+    Type: AWS::Events::Rule
+    #Condition: "IsProd"
+    Properties:
+      Description: "Scheduled Rule to keep GetFunction Warm"
+      # Schedule rule in UTC.
+      ScheduleExpression: "rate(10 minutes)"
+      State: "ENABLED"
+      Targets:
+        - Arn: !GetAtt GetFunction.Arn
+          Id: "GetFunction"
+  PermissionForEventsToInvokeSyncLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: "SyncFunction"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt ScheduledRule.Arn
+  PermissionForEventsToInvokeGetLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: "GetFunction"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt ScheduledRuleGetWarm.Arn
+  SyncFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Handler: edu.sydneyuni.myuni.LabStatsSync
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          LABSTATS_API_KEY: !Ref LabStatsAPIKey
+          TABLE_NAME: !Ref DynamoDBTable
+      Policies:
+        - AWSLambdaExecute # Managed Policy
+        - Version: '2012-10-17'
+          Statement:
+            - Sid: DynamoDBAccess
+              Effect: Allow
+              Action:
+                - 'dynamodb:PutItem'
+              Resource: !GetAtt DynamoDBTable.Arn
+      Tags:
+        Application: !Ref Application
+        Program: !Ref Program
+  GetFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      Handler: edu.sydneyuni.myuni.RoomStationsQuery
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          TABLE_NAME: !Ref DynamoDBTable
+      Policies:
+        - AWSLambdaExecute # Managed Policy
+        - Version: '2012-10-17'
+          Statement:
+            - Sid: DynamoDBAccess
+              Effect: Allow
+              Action:
+                - 'dynamodb:Query'
+              Resource: !GetAtt DynamoDBTable.Arn
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            Path: '/room-stations'
+            Method: GET
+            RestApiId: !Ref GetFunctionApi
+  GetFunctionApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Cors: "'*'"
+      StageName: !Ref Environment
+      EndpointConfiguration: REGIONAL
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: N
+        - AttributeName: SyncDate
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+        - AttributeName: SyncDate
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: Program
+          Value: !Ref Program
+  DynamoDBScalingRole:
+    Type: "AWS::IAM::Role"
+    Condition: "IsProd"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "application-autoscaling.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "dynamodb:DescribeTable"
+                  - "dynamodb:UpdateTable"
+                  - "cloudwatch:PutMetricAlarm"
+                  - "cloudwatch:DescribeAlarms"
+                  - "cloudwatch:GetMetricStatistics"
+                  - "cloudwatch:SetAlarmState"
+                  - "cloudwatch:DeleteAlarms"
+                Resource: "*"
+  DynamoDBReadCapacityScalableTarget:
+    Type: "AWS::ApplicationAutoScaling::ScalableTarget"
+    Condition: "IsProd"
+    Properties:
+      MaxCapacity: 50
+      MinCapacity: 1
+      ResourceId: !Sub "table/${DynamoDBTable}"
+      RoleARN: !GetAtt DynamoDBScalingRole.Arn
+      ScalableDimension: "dynamodb:table:ReadCapacityUnits"
+      ServiceNamespace: dynamodb
+  DynamoDBReadScalingPolicy:
+    Type: "AWS::ApplicationAutoScaling::ScalingPolicy"
+    Condition: "IsProd"
+    Properties:
+      PolicyName: ReadAutoScalingPolicy
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref DynamoDBReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
+  ########
+  # CICD #
+  ########
+  DeploymentArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteRule
+            Status: Enabled
+            ExpirationInDays: 31
+            NoncurrentVersionExpirationInDays: 31
+      Tags:
+        - Key: Application
+          Value: !Ref Application
+        - Key: Program
+          Value: !Ref Program
+        - Key: Faculty
+          Value: !Ref FacultyName
+        - Key: Lifecycle
+          Value: !Ref Lifecycle
+        - Key: Support
+          Value: !Ref SupportLevel
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName} S3 Bucket"
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+  CodeBuildServicePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodeBuildServicePolicy
+      Roles:
+        - !Ref CodeBuildServiceRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "arn:aws:logs:*:*:*"
+          - Effect: Allow
+            Action:
+              - s3:DeleteObject
+              - s3:PutObject
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource:
+              - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+          - Effect: Allow
+            Action:
+              - s3:ListBucket
+            Resource:
+              - !Sub "arn:aws:s3:::${DeploymentArtifactBucket}"
+          - Effect: Allow
+            Action:
+              - lambda:*
+            Resource:
+              - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${GetFunction}"
+              - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${SyncFunction}"
+          - Effect: Allow
+            Action:
+              - "cloudfront:CreateInvalidation"
+            Resource: "*"
+  # CodePipeline
+  CodePipelineServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: s3-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${DeploymentArtifactBucket}
+                  - !Sub arn:${AWS::Partition}:s3:::${DeploymentArtifactBucket}/*
+        - PolicyName: codebuild-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codebuild:StartBuild"
+                  - "codebuild:BatchGetBuilds"
+                Resource:
+                  - !GetAtt CodeBuildProject.Arn
+                  - !GetAtt CodeBuildSAM.Arn
+        - PolicyName: deploy-cloudformation-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cloudformation:DescribeStacks"
+                  - "cloudformation:CreateChangeSet"
+                  - "cloudformation:ExecuteChangeSet"
+                  - "cloudformation:DescribeChangeSet"
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*
+        - PolicyName: deploy-iam-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "iam:PassRole"
+                Resource:
+                  - "Fn::ImportValue": "CICDCFRoleARN"
+  CodeBuildProject:
+    # Project to package and deploy to PipeLine
+    Type: "AWS::CodeBuild::Project"
+    Properties:
+      Artifacts:
+        Type: S3
+        Location: !Sub "arn:aws:s3:::${DeploymentArtifactBucket}"
+        Name: OutputFromCodeBuildPrep
+        Packaging: ZIP
+      Environment:
+        # Type: linuxContainer
+        Type: LINUX_CONTAINER
+        # ComputeType options: BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM, BUILD_GENERAL1_LARGE
+        ComputeType: BUILD_GENERAL1_SMALL
+        # Run `aws codebuild list-curated-environment-images` for a complete list of images provided.
+        Image: aws/codebuild/standard:2.0
+        EnvironmentVariables:
+          - Name: BUILD_ARTIFACT_BUCKET
+            Value: !Ref DeploymentArtifactBucket
+      Name: !Sub ${AWS::StackName}-prepare
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source:
+        Type: BITBUCKET
+        Location: !Sub https://bitbucket.org/sydneyuni/${RepositoryName}
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+              commands:
+                - echo ${AWS::StackName}-prepare
+          artifacts:
+            files:
+              - '**/*'
+      TimeoutInMinutes: 10
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - Type: EVENT
+              Pattern: PUSH
+            - Type: HEAD_REF
+              Pattern: !Sub ^refs/heads/${BranchName}*$
+  CodeBuildSAM:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${AWS::StackName}-BuildSAM
+      Description: Build the SAM CF code
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: "LINUX_CONTAINER"
+        ComputeType: "BUILD_GENERAL1_SMALL"
+        Image: "aws/codebuild/standard:4.0"
+        EnvironmentVariables:
+          - Name: BranchName
+            Value: !Ref BranchName
+          - Name: codebucket
+            Value: !Ref DeploymentArtifactBucket
+          - Name: stackEnvVar
+            Value: !Ref Environment
+          - Name: Application
+            Value: !Ref Application
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: buildspec.yml
+  CodePipeline:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      ArtifactStore:
+        Type: S3
+        Location: !Ref DeploymentArtifactBucket
+      Name: !Ref "AWS::StackName"
+      RestartExecutionOnUpdate: true
+      RoleArn: !GetAtt "CodePipelineServiceRole.Arn"
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: "1"
+                Provider: "S3"
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                S3Bucket: !Ref DeploymentArtifactBucket
+                S3ObjectKey: OutputFromCodeBuildPrep
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: BuildSAMCode
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              Configuration:
+                ProjectName: !Ref CodeBuildSAM
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: BuildSAMOutputArtifact
+              RunOrder: 1
+        - Name: DeployCloudformation
+          Actions:
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              InputArtifacts:
+                - Name: BuildSAMOutputArtifact
+              Configuration:
+                ActionMode: CHANGE_SET_REPLACE
+                Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+                #ParameterOverrides: !Ref DeployParameterOverrides
+                TemplateConfiguration: !Sub "BuildSAMOutputArtifact::cicd.param.${BranchName}.json"
+                RoleArn:
+                  "Fn::ImportValue": "CICDCFRoleARN"
+                StackName: !Sub "${AWS::StackName}"
+                TemplatePath: "BuildSAMOutputArtifact::packaged-template.yaml"
+                ChangeSetName: !Sub a-${AWS::StackName}-Deploy
+              RunOrder: 1
+            - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              Configuration:
+                ActionMode: CHANGE_SET_EXECUTE
+                StackName: !Sub "${AWS::StackName}"
+                ChangeSetName: !Sub a-${AWS::StackName}-Deploy
+              RunOrder: 2
+Outputs:
+  SyncFunction:
+    Description: "SyncFunction ARN"
+    Value: !GetAtt SyncFunction.Arn
+  GetFunction:
+    Description: "GetFunction ARN"
+    Value: !GetAtt GetFunction.Arn
+  GetFunctionApiEndPoint:
+    Description: 'Room Stations API Endpoint'
+    Value: !Sub '${GetFunctionApi}.execute-api.${AWS::Region}.amazonaws.com'
+    Export:
+      Name: !Sub '${AWS::StackName}-GetFunctionApiEndPoint'
+  DynamoDBTable:
+    Description: "DynamoDB ARN"
+    Value: !GetAtt DynamoDBTable.Arn
